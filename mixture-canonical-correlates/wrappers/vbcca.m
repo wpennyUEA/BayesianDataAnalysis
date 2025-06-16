@@ -70,12 +70,14 @@ end
 
 nModel.normalLatents = 1;
 
-if isfield(options,'indices')
-    nModel = vbcca_index_init (nModel, x1, x2, options.indices);
-else
-    nModel = nModel.initWithKMeans(x1,x2,150,retries);
-end
+% if isfield(options,'indices')
+%     % Bespoke initialisation
+%     nModel = vbcca_index_init (nModel, x1, x2, options.indices);
+% else
+%     nModel = nModel.initWithKMeans(x1,x2,150,retries);
+% end
 
+nModel = nModel.initWithKMeans(x1,x2,150,retries);
 
 % Learning
 %---------------------------------------------
