@@ -1,0 +1,7 @@
+Variation Bayesian Mixture of Robust CCAs:
+
+demo.m - Is a simple example that demonstrates how to learn the model and use it in a simple prediction task.
+@vbmcca\vbmcca.m - The class file for learning the Variational CCA model. Documentation is in the source file
+and member function help texts.
+
+The code requires Lightspeed Toolbox.
