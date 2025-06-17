@@ -1,0 +1,378 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_linear_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_linear_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script simulates hierarchical linear mixed effects data, and</span>
+<span class="comment">% performs Bayesian parameter estimation at both a group and indivudla</span>
+<span class="comment">% level using Variational Bayes</span>
+
+<span class="comment">% Generate Data</span>
+sim.v = [2,1,1];    <span class="comment">% True population level effects</span>
+sim.Lambda = diag([100 10 100]); sim.C = inv(sim.Lambda);   <span class="comment">% Precision matrix for between-subject variability</span>
+
+<span class="comment">% Within-subject parameters</span>
+sim.N = 5;  <span class="comment">% Observations per subject</span>
+sd = 0.1;   <span class="comment">% Noise SD for within-subject data</span>
+<span class="comment">%sd = 1;</span>
+sim.lambda = 1/(sd^2);  <span class="comment">% Precision of noise</span>
+
+<span class="comment">% Number of parameters</span>
+P = length(sim.v);
+<span class="comment">%Prior mean and covariance for group-level effects (hierarchical prior)</span>
+<span class="comment">%hier.mu0 = 2*ones(P,1);</span>
+hier.mu0 = zeros(P,1);  <span class="comment">% Prior mean = 0</span>
+hier.S0 = 0.01*eye(P);  <span class="comment">% Weak prior covariance</span>
+
+<span class="comment">% Generate design matrix for linear model</span>
+[M,U] = linear_model (sim.N,sim.lambda);
+
+<span class="comment">% Number of subjects</span>
+Nsub=90;
+
+<span class="comment">% Simulate true individual parameters for each subject</span>
+w_tmp = spm_normrnd(sim.v,sim.C,Nsub);
+Yall=[];    <span class="comment">% Container for data across subjects</span>
+
+<span class="comment">% Generate data for each subject based on their true parameters</span>
+<span class="keyword">for</span> s=1:Nsub,
+    model{s}.w_true = w_tmp(:,s);
+    model{s}.Y = U.X*model{s}.w_true+sqrt(M.Ce)*randn(sim.N,1);
+    Yall = [Yall,model{s}.Y];
+<span class="keyword">end</span>
+
+<span class="comment">% Plot individual subject data time courses</span>
+plot_data=0;
+<span class="keyword">if</span> plot_data
+    rN = ceil(sqrt(Nsub));
+    <span class="keyword">for</span> s=1:Nsub,
+        subplot(rN,rN,s);
+        plot(U.t,model{s}.Y,<span class="string">'x'</span>);
+        ylim([0 max(max(Yall))]);
+        grid <span class="string">on</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Prep model structures for Variational Bayes fitting</span>
+<span class="keyword">for</span> s=1:Nsub,
+    model{s}.M = M; <span class="comment">% Model structure</span>
+    model{s}.U = U; <span class="comment">% Input design</span>
+    model{s}.mu = M.pE; <span class="comment">% Prior mean for parameters</span>
+    model{s}.S = inv(M.pC); <span class="comment">% Prior covariance</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Use tight prior precision</span>
+tight_prior=0;
+<span class="keyword">if</span> tight_prior
+    <span class="comment">% Set tight group precision prior</span>
+    sigma0 = 1.68;
+    mean_prec = ones(P,1)*(1/sigma0)^2;
+    var_prec = 0.01*ones(P,1);
+    hier.b0 = mean_prec./var_prec;
+    hier.a0 = hier.b0.*mean_prec;
+<span class="keyword">end</span>
+
+<span class="comment">% Perform Variational Bayes mixed effects modelling</span>
+[model,hier,D,F] = vbmfx(model,<span class="string">'linear_fit'</span>,hier);
+
+<span class="comment">% Calculate average individual-level parameter estimates across subjects</span>
+indiv_mu = mean(D.w_indiv')';
+
+<span class="comment">% Plot group-level parameter estimates</span>
+h=figure;
+set(h,<span class="string">'Name'</span>,<span class="string">'Group Level'</span>);
+P = length(sim.v);
+rN = ceil(sqrt(P));
+<span class="keyword">for</span> p=1:P,
+    theta(p,:) = [sim.v(p),hier.mu(p),indiv_mu(p)];
+<span class="keyword">end</span>
+bar(theta);
+legend(<span class="string">'True'</span>,<span class="string">'Hierarchical'</span>,<span class="string">'Shrinkage'</span>);
+grid <span class="string">on</span>
+ylim([0.75*min(sim.v) 1.25*max(sim.v)]);
+xlabel(<span class="string">'Parameter'</span>);
+
+<span class="comment">% Plot subject-level parameter estimates against true values</span>
+h=figure;
+set(h,<span class="string">'Name'</span>,<span class="string">'Subject Level'</span>);
+<span class="keyword">for</span> p=1:P,
+    subplot(rN,rN,p);
+    x = sort(w_tmp(p,:));
+    plot(x,x,<span class="string">'k-'</span>);
+    hold <span class="string">on</span>
+    plot(w_tmp(p,:),D.w_hier(p,:),<span class="string">'ro'</span>);    <span class="comment">% Hierarchical estimates</span>
+    plot(w_tmp(p,:),D.w_indiv(p,:),<span class="string">'bo'</span>);   <span class="comment">% Shrinkage estimates</span>
+    grid <span class="string">on</span>
+    legend(<span class="string">'True'</span>,<span class="string">'Hierarchical'</span>,<span class="string">'Shrinkage'</span>);
+<span class="keyword">end</span>
+
+<span class="comment">% Calculate sum of squared errors for parameter estimates</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'Errors in within-subject parameter estimates:'</span>);
+<span class="keyword">for</span> p=1:P,
+    e=D.w_hier(p,:)-w_tmp(p,:);
+    Eh = sum(e.^2);
+    e=D.w_indiv(p,:)-w_tmp(p,:);
+    Es = sum(e.^2);
+    disp(sprintf(<span class="string">'Parameter %d SSE: Hier = %1.3f, Shrinkage = %1.3f'</span>,p,Eh,Es));
+    sse(p,:) = [Eh,Es];
+<span class="keyword">end</span>
+
+<span class="comment">% Plot sum of squared errors for hierarchical vs shrinkage estimates</span>
+h = figure;
+set(h,<span class="string">'Name'</span>,<span class="string">'Within Subject Error'</span>);
+bar(sse);
+legend(<span class="string">'Hierarchical'</span>,<span class="string">'Shrinkage'</span>);
+grid <span class="string">on</span>
+xlabel(<span class="string">'Parameter'</span>);
+ylabel(<span class="string">'Sum Squared Error'</span>);
+
+<span class="comment">% Plot prior and posterior group precision estimates</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'Prior and Posterior Group Precisions:'</span>);
+vbmfx_plot_precisions (hier);
+</pre>
+<pre class="codeoutput">Iteration 2 propchange = 0.0000
+MFX outer loop 1 ...
+Iteration 2 propchange = 0.0000
+ 
+Errors in within-subject parameter estimates:
+Parameter 1 SSE: Hier = 0.123, Shrinkage = 0.147
+Parameter 2 SSE: Hier = 0.460, Shrinkage = 0.667
+Parameter 3 SSE: Hier = 0.446, Shrinkage = 0.732
+ 
+Prior and Posterior Group Precisions:
+Mean = 10.000 SD = 31.623
+Mean = 10.000 SD = 31.623
+Mean = 10.000 SD = 31.623
+Mean = 95.658 SD = 14.244
+Mean = 8.418 SD = 1.253
+Mean = 59.907 SD = 8.921
+</pre>
+<img vspace="5" hspace="5" src="demo_linear_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_complete_04.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_complete_05.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script simulates hierarchical linear mixed effects data, and
+% performs Bayesian parameter estimation at both a group and indivudla
+% level using Variational Bayes
+
+% Generate Data
+sim.v = [2,1,1];    % True population level effects
+sim.Lambda = diag([100 10 100]); sim.C = inv(sim.Lambda);   % Precision matrix for between-subject variability
+
+% Within-subject parameters
+sim.N = 5;  % Observations per subject
+sd = 0.1;   % Noise SD for within-subject data
+%sd = 1;
+sim.lambda = 1/(sd^2);  % Precision of noise
+
+% Number of parameters
+P = length(sim.v);
+%Prior mean and covariance for group-level effects (hierarchical prior)
+%hier.mu0 = 2*ones(P,1);
+hier.mu0 = zeros(P,1);  % Prior mean = 0
+hier.S0 = 0.01*eye(P);  % Weak prior covariance
+
+% Generate design matrix for linear model
+[M,U] = linear_model (sim.N,sim.lambda);
+
+% Number of subjects
+Nsub=90;
+
+% Simulate true individual parameters for each subject
+w_tmp = spm_normrnd(sim.v,sim.C,Nsub);
+Yall=[];    % Container for data across subjects
+
+% Generate data for each subject based on their true parameters
+for s=1:Nsub,
+    model{s}.w_true = w_tmp(:,s);
+    model{s}.Y = U.X*model{s}.w_true+sqrt(M.Ce)*randn(sim.N,1);
+    Yall = [Yall,model{s}.Y];
+end
+
+% Plot individual subject data time courses
+plot_data=0;
+if plot_data
+    rN = ceil(sqrt(Nsub));
+    for s=1:Nsub,
+        subplot(rN,rN,s);
+        plot(U.t,model{s}.Y,'x');
+        ylim([0 max(max(Yall))]);
+        grid on
+    end
+end
+
+% Prep model structures for Variational Bayes fitting
+for s=1:Nsub,
+    model{s}.M = M; % Model structure
+    model{s}.U = U; % Input design
+    model{s}.mu = M.pE; % Prior mean for parameters
+    model{s}.S = inv(M.pC); % Prior covariance
+end
+
+% Use tight prior precision
+tight_prior=0;
+if tight_prior
+    % Set tight group precision prior
+    sigma0 = 1.68;
+    mean_prec = ones(P,1)*(1/sigma0)^2;
+    var_prec = 0.01*ones(P,1);
+    hier.b0 = mean_prec./var_prec;
+    hier.a0 = hier.b0.*mean_prec;
+end
+
+% Perform Variational Bayes mixed effects modelling
+[model,hier,D,F] = vbmfx(model,'linear_fit',hier);
+
+% Calculate average individual-level parameter estimates across subjects
+indiv_mu = mean(D.w_indiv')';
+
+% Plot group-level parameter estimates
+h=figure;
+set(h,'Name','Group Level');
+P = length(sim.v);
+rN = ceil(sqrt(P));
+for p=1:P,
+    theta(p,:) = [sim.v(p),hier.mu(p),indiv_mu(p)];
+end
+bar(theta);
+legend('True','Hierarchical','Shrinkage');
+grid on
+ylim([0.75*min(sim.v) 1.25*max(sim.v)]);
+xlabel('Parameter');
+
+% Plot subject-level parameter estimates against true values
+h=figure;
+set(h,'Name','Subject Level');
+for p=1:P,
+    subplot(rN,rN,p);
+    x = sort(w_tmp(p,:));
+    plot(x,x,'k-');
+    hold on
+    plot(w_tmp(p,:),D.w_hier(p,:),'ro');    % Hierarchical estimates
+    plot(w_tmp(p,:),D.w_indiv(p,:),'bo');   % Shrinkage estimates
+    grid on
+    legend('True','Hierarchical','Shrinkage');
+end
+
+% Calculate sum of squared errors for parameter estimates
+disp(' ');
+disp('Errors in within-subject parameter estimates:');
+for p=1:P,
+    e=D.w_hier(p,:)-w_tmp(p,:);
+    Eh = sum(e.^2);
+    e=D.w_indiv(p,:)-w_tmp(p,:);
+    Es = sum(e.^2);
+    disp(sprintf('Parameter %d SSE: Hier = %1.3f, Shrinkage = %1.3f',p,Eh,Es));
+    sse(p,:) = [Eh,Es];
+end
+
+% Plot sum of squared errors for hierarchical vs shrinkage estimates
+h = figure;
+set(h,'Name','Within Subject Error');
+bar(sse);
+legend('Hierarchical','Shrinkage');
+grid on
+xlabel('Parameter');
+ylabel('Sum Squared Error');
+
+% Plot prior and posterior group precision estimates
+disp(' ');
+disp('Prior and Posterior Group Precisions:');
+vbmfx_plot_precisions (hier);
+
+
+
+
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
