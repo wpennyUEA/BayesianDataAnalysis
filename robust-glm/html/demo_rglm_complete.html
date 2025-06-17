@@ -1,0 +1,362 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_rglm_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_rglm_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="comment">% This script compares parameter estimation errors between a standard GLM using ordinary least squares, and then a</span>
+<span class="comment">% robust GLM with 1 and 2 mixture components</span>
+
+<span class="comment">% Generate data from ARMOG model</span>
+N=351;
+x1=spm_boxcars(N,1,10); <span class="comment">% Design regressor</span>
+x2=ones(N,1);   <span class="comment">% Intercept</span>
+X=[x1,x2];
+beta=[1 1]';    <span class="comment">%True parameters</span>
+
+<span class="comment">% Define Gaussian-Mixture noise parameters (2 components)</span>
+m=2;
+mix.m=m;
+mix.state(1).prior=0.73;
+mix.state(2).prior=0.27;
+mix.state(1).m=0;
+mix.state(2).m=0;
+<span class="comment">% Variance of the components</span>
+mix.state(1).C=2.4^2;
+mix.state(2).C=8.4^2;
+
+<span class="comment">% Sample noise from Gaussian mixture</span>
+[noise,gamma_true]=spm_samp_mix(mix,N);
+new_index=randperm(N);
+noise=noise(new_index);
+gamma_true=gamma_true(new_index);
+
+<span class="comment">% Generate data with mixture noise</span>
+y=X*beta + noise;
+
+<span class="comment">% Fit robust GLM with 1 and 2 mixture components</span>
+m=1;
+rglm1 = spm_rglm (y,X,m);
+m=2;
+rglm2 = spm_rglm (y,X,m);
+<span class="comment">% Fit standard GLM (ordinary least squares)</span>
+w_ml=pinv(X)*y;
+
+<span class="comment">% Plot true signal and observed data</span>
+figure
+plot(X*beta);
+hold <span class="string">on</span>;
+plot(y,<span class="string">'r'</span>);
+legend(<span class="string">'Signal'</span>,<span class="string">'Data'</span>);
+
+<span class="comment">% Plot histogram of noise</span>
+figure
+hist(noise,20);
+title(<span class="string">'Error histogram'</span>);
+
+<span class="comment">% Plot estimated vs true class labels for mixture components</span>
+figure
+plot(rglm2.posts.gamma(1,:),<span class="string">'r'</span>);
+hold
+plot(gamma_true);
+axis([0 N -0.1 2.1]);
+title(<span class="string">'Class labels'</span>);
+legend(<span class="string">'Estimated'</span>,<span class="string">'True'</span>);
+
+<span class="comment">% Calculate error norms for parameter estimates</span>
+d_ml=norm(w_ml-beta);
+d_vb=norm(rglm2.posts.w_mean-beta);
+
+<span class="comment">% Model averaging (based on model evidence)</span>
+f=[rglm1.fm,rglm2.fm];
+f=f-mean(f);    <span class="comment">% Normalise</span>
+ef=exp(f);
+pm=ef./sum(ef); <span class="comment">% Posterior probability of each model</span>
+w_ma=pm(1)*rglm1.posts.w_mean + pm(2)*rglm2.posts.w_mean;
+d_ma=norm(w_ma-beta);
+
+<span class="comment">% Display results</span>
+disp(<span class="string">' '</span>);
+disp(sprintf(<span class="string">'Error for GLM=%1.3f'</span>,d_ml));
+disp(sprintf(<span class="string">'Error for RGLM=%1.3f'</span>,d_vb));
+
+disp(<span class="string">' '</span>);
+err_ratio=d_ml/d_vb;
+disp(sprintf(<span class="string">'Ratio MSE_GLM/MSE_RGLM=%1.3f'</span>,d_ml/d_vb));
+
+<span class="comment">% Calculate negative predictive log-likelihoods (cost)</span>
+
+<span class="comment">% 1. ML Gaussian likelihood</span>
+e_ml=y-X*w_ml;
+s_ml=std(e_ml);
+p_ml=spm_Npdf(e_ml,0,s_ml^2);   <span class="comment">% Evaluate Gaussian PDF at residuals</span>
+E=-log(p_ml);   <span class="comment">% Negative log-likelihood</span>
+<span class="comment">% Compute theoretical NLL curve for a range of error values</span>
+el=[-4*s_ml:0.1:4*s_ml];
+pl=spm_Npdf(el,0,s_ml^2);
+El=-log(pl);
+
+<span class="comment">% 2. Variational Bayes (Gaussian Mixture)</span>
+p_vb=zeros(N,1);
+<span class="keyword">for</span> s=1:rglm2.m,
+    p_g=spm_Npdf(e_ml,0,rglm2.posts.variances(s)); <span class="comment">% Evaluate Gaussian PDF at residuals with component variance</span>
+    p_vb=p_vb+rglm2.posts.pi(s)*p_g;    <span class="comment">% Weight by the component's posterior probability</span>
+<span class="keyword">end</span>
+E_vb=-log(p_vb);    <span class="comment">% Negative log-likelihood</span>
+<span class="comment">% Compute theoretical NLL curve for a range of error values</span>
+p_v=zeros(size(el));
+<span class="keyword">for</span> s=1:rglm2.m,
+    p_g=spm_Npdf(el,0,rglm2.posts.variances(s));
+    p_v=p_v+rglm2.posts.pi(s)*p_g;
+<span class="keyword">end</span>
+Ev=-log(p_v);
+
+<span class="comment">% Plot theoretical NLL</span>
+figure
+plot(el,El,<span class="string">'LineWidth'</span>,2);
+hold <span class="string">on</span>
+plot(el,Ev,<span class="string">'r'</span>,<span class="string">'LineWidth'</span>,2);
+[ee,ei]=sort(e_ml);
+<span class="comment">% Plot NLL values</span>
+plot(e_ml,E,<span class="string">'.'</span>,<span class="string">'MarkerSize'</span>,20);
+plot(e_ml,E_vb,<span class="string">'r.'</span>,<span class="string">'MarkerSize'</span>,20);
+
+set(gca,<span class="string">'FontSize'</span>,18);
+legend(<span class="string">'Gaussian'</span>,<span class="string">'MoG'</span>);
+xlabel(<span class="string">'Error, e_n'</span>);
+ylabel(<span class="string">'-ln p(e_n)'</span>);
+title(<span class="string">'Cost'</span>);
+
+<span class="comment">% Compute Z-values (effect size over uncertainty)</span>
+z1=rglm1.posts.w_mean(1)/sqrt(rglm1.posts.w_cov(1,1));
+z2=rglm2.posts.w_mean(1)/sqrt(rglm2.posts.w_cov(1,1));
+
+disp(sprintf(<span class="string">'Z value for GLM = %1.2f'</span>,z1));
+disp(sprintf(<span class="string">'Z value for RGLM = %1.2f'</span>,z2));
+</pre>
+<pre class="codeoutput">Current plot held
+ 
+Error for GLM=0.713
+Error for RGLM=0.512
+ 
+Ratio MSE_GLM/MSE_RGLM=1.391
+Z value for GLM = 3.50
+Z value for RGLM = 4.97
+</pre>
+<img vspace="5" hspace="5" src="demo_rglm_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_rglm_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_rglm_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_rglm_complete_04.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% This script compares parameter estimation errors between a standard GLM using ordinary least squares, and then a
+% robust GLM with 1 and 2 mixture components
+
+% Generate data from ARMOG model
+N=351;
+x1=spm_boxcars(N,1,10); % Design regressor
+x2=ones(N,1);   % Intercept
+X=[x1,x2]; 
+beta=[1 1]';    %True parameters
+
+% Define Gaussian-Mixture noise parameters (2 components)
+m=2;
+mix.m=m;
+mix.state(1).prior=0.73;
+mix.state(2).prior=0.27;
+mix.state(1).m=0;
+mix.state(2).m=0;
+% Variance of the components
+mix.state(1).C=2.4^2;
+mix.state(2).C=8.4^2;
+
+% Sample noise from Gaussian mixture
+[noise,gamma_true]=spm_samp_mix(mix,N);
+new_index=randperm(N);
+noise=noise(new_index);
+gamma_true=gamma_true(new_index);
+
+% Generate data with mixture noise
+y=X*beta + noise;
+
+% Fit robust GLM with 1 and 2 mixture components
+m=1;
+rglm1 = spm_rglm (y,X,m);
+m=2;
+rglm2 = spm_rglm (y,X,m);
+% Fit standard GLM (ordinary least squares)
+w_ml=pinv(X)*y;
+
+% Plot true signal and observed data
+figure
+plot(X*beta);
+hold on;
+plot(y,'r');
+legend('Signal','Data');
+
+% Plot histogram of noise
+figure
+hist(noise,20);
+title('Error histogram');
+
+% Plot estimated vs true class labels for mixture components
+figure
+plot(rglm2.posts.gamma(1,:),'r');
+hold
+plot(gamma_true);
+axis([0 N -0.1 2.1]);
+title('Class labels');
+legend('Estimated','True');
+
+% Calculate error norms for parameter estimates
+d_ml=norm(w_ml-beta);
+d_vb=norm(rglm2.posts.w_mean-beta);
+
+% Model averaging (based on model evidence)
+f=[rglm1.fm,rglm2.fm];
+f=f-mean(f);    % Normalise
+ef=exp(f);
+pm=ef./sum(ef); % Posterior probability of each model
+w_ma=pm(1)*rglm1.posts.w_mean + pm(2)*rglm2.posts.w_mean;
+d_ma=norm(w_ma-beta);
+
+% Display results
+disp(' ');
+disp(sprintf('Error for GLM=%1.3f',d_ml));
+disp(sprintf('Error for RGLM=%1.3f',d_vb));
+
+disp(' ');
+err_ratio=d_ml/d_vb;
+disp(sprintf('Ratio MSE_GLM/MSE_RGLM=%1.3f',d_ml/d_vb));
+
+% Calculate negative predictive log-likelihoods (cost)
+
+% 1. ML Gaussian likelihood
+e_ml=y-X*w_ml;  
+s_ml=std(e_ml); 
+p_ml=spm_Npdf(e_ml,0,s_ml^2);   % Evaluate Gaussian PDF at residuals
+E=-log(p_ml);   % Negative log-likelihood
+% Compute theoretical NLL curve for a range of error values
+el=[-4*s_ml:0.1:4*s_ml];
+pl=spm_Npdf(el,0,s_ml^2);
+El=-log(pl);
+
+% 2. Variational Bayes (Gaussian Mixture)
+p_vb=zeros(N,1);
+for s=1:rglm2.m,
+    p_g=spm_Npdf(e_ml,0,rglm2.posts.variances(s)); % Evaluate Gaussian PDF at residuals with component variance
+    p_vb=p_vb+rglm2.posts.pi(s)*p_g;    % Weight by the component's posterior probability
+end
+E_vb=-log(p_vb);    % Negative log-likelihood
+% Compute theoretical NLL curve for a range of error values
+p_v=zeros(size(el));
+for s=1:rglm2.m,
+    p_g=spm_Npdf(el,0,rglm2.posts.variances(s));
+    p_v=p_v+rglm2.posts.pi(s)*p_g;
+end
+Ev=-log(p_v);
+
+% Plot theoretical NLL
+figure
+plot(el,El,'LineWidth',2);
+hold on
+plot(el,Ev,'r','LineWidth',2);
+[ee,ei]=sort(e_ml);
+% Plot NLL values
+plot(e_ml,E,'.','MarkerSize',20);
+plot(e_ml,E_vb,'r.','MarkerSize',20);
+
+set(gca,'FontSize',18);
+legend('Gaussian','MoG');
+xlabel('Error, e_n');
+ylabel('-ln p(e_n)');
+title('Cost');
+
+% Compute Z-values (effect size over uncertainty)
+z1=rglm1.posts.w_mean(1)/sqrt(rglm1.posts.w_cov(1,1));
+z2=rglm2.posts.w_mean(1)/sqrt(rglm2.posts.w_cov(1,1));
+
+disp(sprintf('Z value for GLM = %1.2f',z1));
+disp(sprintf('Z value for RGLM = %1.2f',z2));
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
