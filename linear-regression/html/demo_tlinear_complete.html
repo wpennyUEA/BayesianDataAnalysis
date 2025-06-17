@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_tlinear_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_tlinear_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script compares the Savage-Dickey and Model comparison Bayes factor</span>
+<span class="comment">% approaches to Bayesian hypthesis testing</span>
+
+<span class="comment">% Add data here</span>
+N = 100;    <span class="comment">% Sample size</span>
+X0 = randn(N,2);    <span class="comment">% Two regressors</span>
+X0 = zmuv(X0); <span class="comment">% Zero mean, unit-variance normalisation</span>
+X = [ones(N,1),X0]; <span class="comment">% Full design matrix with intercept</span>
+
+<span class="comment">% Define true beta weights (intercept and coefficients)</span>
+<span class="comment">%true_beta = [0,0.3,0.2]';</span>
+true_beta = [0,0.3,0.2]';  <span class="comment">% Can change the intercept (0 here)</span>
+
+<span class="comment">% Generate response variable with Gaussian noise</span>
+e = 0.1*randn(N,1);
+y = X*true_beta + e;
+
+<span class="comment">% Set up null and alternative models</span>
+<span class="comment">% Prior for the noise precision (inverse variance) with mean=b0*c0; var = (b0^2)*c0;</span>
+glm.b0 = 10; glm.c0=0.1;
+glm0 = glm;  <span class="comment">% Null model - excludes some predictors</span>
+glm.X = X;   <span class="comment">% Alternative model - includes all predictors</span>
+glm0.X = X0; <span class="comment">% Null model - excludes intercept</span>
+
+<span class="comment">% Fit alternative model (includes intercept and X0)</span>
+glm = bayes_tlinear_estimate (glm,y);
+
+<span class="comment">% Test intercept term using Savage-Dickey method</span>
+logbf_savage_dickey = bayes_tlinear_test(glm,[1 0 0],0)
+
+<span class="comment">% Fit null model (without intercept)</span>
+glm0 = bayes_tlinear_estimate (glm0,y);
+
+<span class="comment">% Compare models by subtracting log evidences</span>
+logbf_two_model = glm.F-glm0.F
+</pre>
+<pre class="codeoutput">
+logbf_savage_dickey =
+
+   -4.6038
+
+
+logbf_two_model =
+
+   -1.7606
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script compares the Savage-Dickey and Model comparison Bayes factor
+% approaches to Bayesian hypthesis testing
+
+% Add data here
+N = 100;    % Sample size
+X0 = randn(N,2);    % Two regressors
+X0 = zmuv(X0); % Zero mean, unit-variance normalisation
+X = [ones(N,1),X0]; % Full design matrix with intercept
+
+% Define true beta weights (intercept and coefficients)
+%true_beta = [0,0.3,0.2]';
+true_beta = [0,0.3,0.2]';  % Can change the intercept (0 here)
+
+% Generate response variable with Gaussian noise
+e = 0.1*randn(N,1); 
+y = X*true_beta + e;
+
+% Set up null and alternative models
+% Prior for the noise precision (inverse variance) with mean=b0*c0; var = (b0^2)*c0;
+glm.b0 = 10; glm.c0=0.1; 
+glm0 = glm;  % Null model - excludes some predictors
+glm.X = X;   % Alternative model - includes all predictors
+glm0.X = X0; % Null model - excludes intercept
+
+% Fit alternative model (includes intercept and X0)
+glm = bayes_tlinear_estimate (glm,y);
+
+% Test intercept term using Savage-Dickey method
+logbf_savage_dickey = bayes_tlinear_test(glm,[1 0 0],0)
+
+% Fit null model (without intercept)
+glm0 = bayes_tlinear_estimate (glm0,y);
+
+% Compare models by subtracting log evidences
+logbf_two_model = glm.F-glm0.F
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>

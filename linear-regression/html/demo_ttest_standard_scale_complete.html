@@ -1,0 +1,231 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_ttest_standard_scale_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_ttest_standard_scale_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script compares Savage-Dickey and Default JZS Baues Factors in a</span>
+<span class="comment">% one-sample t-test when the prior is properly scaled to the data (not an arbitrary scale)</span>
+
+<span class="comment">% Number of parameters (intercept only)</span>
+K=1;
+
+N=16; <span class="comment">% Sample size</span>
+glm.X=ones(N,K);    <span class="comment">% One-sample design matrix</span>
+
+<span class="comment">% Prior hyperparameters</span>
+glm.c0=2;   <span class="comment">% Shape of Gamma prior</span>
+glm.b0=0.5; <span class="comment">% Scale of Gamma prior</span>
+glm.B0=1*eye(K);    <span class="comment">% Prior covarience</span>
+glm.w0=zeros(K,1);  <span class="comment">% Prior mean</span>
+
+<span class="comment">% Number of repetitions/simulations</span>
+R=1000;
+
+<span class="comment">% Preallocate</span>
+lambda=spm_gamrnd(glm.c0,glm.b0,R,1);   <span class="comment">% Sample precisions</span>
+iB0=inv(glm.B0);    <span class="comment">% Inverse prior covariance</span>
+
+<span class="keyword">for</span> i=1:R,
+    <span class="comment">% Sample w from prior, scaled by precision</span>
+    C0 = iB0/lambda(i);
+    w(:,i) = spm_normrnd(glm.w0,C0,1);
+    <span class="comment">%w(:,i) = 0;</span>
+    <span class="comment">% Effect size</span>
+    d(i) = w(:,i)*sqrt(lambda(i));
+    <span class="comment">% Simulate data</span>
+    y = glm.X*w(:,i)+sqrt(1/lambda(i))*randn(N,1);
+    <span class="comment">% Compute Bayes Factors and t-statistic</span>
+    [logbf(i),logbf_Default(i),t(i)] = bayes_glm_ttest1 (y);
+<span class="keyword">end</span>
+
+<span class="comment">% Plot comparison of Log Bayes Factors</span>
+figure
+subplot(2,2,1);
+plot(logbf_Default,logbf,<span class="string">'x'</span>);
+xlabel(<span class="string">'LogBF Default'</span>);
+ylabel(<span class="string">'LogBF SDT'</span>);
+grid <span class="string">on</span>
+[tmp,ind]=sort(logbf_Default);
+hold <span class="string">on</span>
+plot(tmp,tmp,<span class="string">'r-'</span>);
+
+<span class="comment">% Plot effect size vs LogBF</span>
+subplot(2,2,2);
+plot(d,logbf_Default,<span class="string">'bx'</span>);
+hold <span class="string">on</span>
+grid <span class="string">on</span>
+plot(d,logbf,<span class="string">'rx'</span>);
+xlabel(<span class="string">'True Effect Size'</span>);
+ylabel(<span class="string">'LogBF'</span>);
+legend(<span class="string">'Default'</span>,<span class="string">'SDT'</span>);
+
+<span class="comment">% Plot t-statisitc vs LogBF</span>
+subplot(2,2,4);
+plot(t,logbf_Default,<span class="string">'bx'</span>);
+hold <span class="string">on</span>
+grid <span class="string">on</span>
+plot(t,logbf,<span class="string">'rx'</span>);
+xlabel(<span class="string">'t-statistic'</span>);
+ylabel(<span class="string">'LogBF'</span>);
+legend(<span class="string">'Default'</span>,<span class="string">'SDT'</span>);
+</pre>
+<img vspace="5" hspace="5" src="demo_ttest_standard_scale_complete_01.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script compares Savage-Dickey and Default JZS Baues Factors in a
+% one-sample t-test when the prior is properly scaled to the data (not an arbitrary scale)
+
+% Number of parameters (intercept only)
+K=1;
+
+N=16; % Sample size
+glm.X=ones(N,K);    % One-sample design matrix
+
+% Prior hyperparameters
+glm.c0=2;   % Shape of Gamma prior
+glm.b0=0.5; % Scale of Gamma prior
+glm.B0=1*eye(K);    % Prior covarience
+glm.w0=zeros(K,1);  % Prior mean
+
+% Number of repetitions/simulations
+R=1000;
+
+% Preallocate
+lambda=spm_gamrnd(glm.c0,glm.b0,R,1);   % Sample precisions
+iB0=inv(glm.B0);    % Inverse prior covariance
+
+for i=1:R,
+    % Sample w from prior, scaled by precision
+    C0 = iB0/lambda(i);
+    w(:,i) = spm_normrnd(glm.w0,C0,1);
+    %w(:,i) = 0;
+    % Effect size
+    d(i) = w(:,i)*sqrt(lambda(i)); 
+    % Simulate data
+    y = glm.X*w(:,i)+sqrt(1/lambda(i))*randn(N,1);
+    % Compute Bayes Factors and t-statistic
+    [logbf(i),logbf_Default(i),t(i)] = bayes_glm_ttest1 (y);
+end
+
+% Plot comparison of Log Bayes Factors
+figure
+subplot(2,2,1);
+plot(logbf_Default,logbf,'x');
+xlabel('LogBF Default');
+ylabel('LogBF SDT');
+grid on
+[tmp,ind]=sort(logbf_Default);
+hold on
+plot(tmp,tmp,'r-');
+
+% Plot effect size vs LogBF
+subplot(2,2,2);
+plot(d,logbf_Default,'bx');
+hold on
+grid on
+plot(d,logbf,'rx');
+xlabel('True Effect Size');
+ylabel('LogBF');
+legend('Default','SDT');
+
+% Plot t-statisitc vs LogBF
+subplot(2,2,4);
+plot(t,logbf_Default,'bx');
+hold on
+grid on
+plot(t,logbf,'rx');
+xlabel('t-statistic');
+ylabel('LogBF');
+legend('Default','SDT');
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
