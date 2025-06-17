@@ -1,0 +1,296 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_vpca_small_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_vpca_small_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">close <span class="string">all</span>
+clear <span class="string">all</span>
+
+<span class="comment">% This script demonstrates variational PCA using synthetic data.</span>
+<span class="comment">% Data is generated from a known PCA generative model: y_n = W x_n + mu + e_n</span>
+<span class="comment">% where W is d*q - first example in Bishop's VPCA paper</span>
+
+N=100;  <span class="comment">% Observations</span>
+d=10;   <span class="comment">% Data dimensionality</span>
+<span class="comment">%q=d-1;</span>
+q=3;    <span class="comment">% Latent imensionality</span>
+
+<span class="comment">% Generate orthogonal latent directions</span>
+W=randn(d,q);
+W=orth(W);
+
+<span class="comment">% Generate latent sources</span>
+x=randn(q,N);
+sd_x=diag([5,4,3,2,1,1,1,1,1]);<span class="comment">% Standard deviations</span>
+x=sd_x(1:q,1:q)*x;
+
+<span class="comment">% Generate Gaussian sensor noise</span>
+e=randn(d,N);
+<span class="comment">% Generate constant mean offset</span>
+mu=ones(d,1)*ones(1,N);
+
+<span class="comment">% Final observed data</span>
+<span class="comment">%e=zeros(d,N);</span>
+t=W*x+mu+e;
+
+<span class="comment">% Run variational PCA</span>
+pca=spm_vpca(t);
+
+<span class="comment">% Visualise estimated factor matrices</span>
+figure; imagesc(pca.M_w); colormap <span class="string">gray</span>; title(<span class="string">'Bayes estimate'</span>);
+figure; imagesc(pca.ml.W); colormap <span class="string">gray</span>; title(<span class="string">'ML estimate'</span>);
+
+<span class="comment">% Plot convergence of variational free energy</span>
+figure
+plot(pca.Fm_evol);
+xlabel(<span class="string">'Iterations'</span>);
+ylabel(<span class="string">'Neg. Free Energy'</span>);
+
+<span class="comment">% Plot eigenspectrum</span>
+figure
+plot(pca.ml.lambda);
+title(<span class="string">'Eigenspectrum'</span>);
+
+<span class="comment">% Plot inferred prior precision on latent factors</span>
+figure
+plot(pca.mean_alpha);
+title(<span class="string">'Prior precision of factors'</span>);
+
+<span class="comment">% Project data into latent space using the top components</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'To recover eg 4 hidden sources'</span>)
+disp(<span class="string">'project data, t, onto first 4 columns of factor matrix:'</span>);
+disp(<span class="string">'W=pca.M_w(:,1:4);xhat=W''*t;'</span>);
+W=pca.M_w(:,1:4);
+xhat=W'*t;  <span class="comment">% Reconstructed latent sources</span>
+
+<span class="comment">% Estimate Bayesian data covariance matrix</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'A Bayesian estimate of the data covariance matrix'</span>);
+disp(<span class="string">'is given by:'</span>);
+disp(<span class="string">'obs_noise_var=(1/pca.mean_tau); CBayes=W*W''+obs_noise_var*eye(pca.d)'</span>);
+obs_noise_var=(1/pca.mean_tau);
+CBayes=W*W'+obs_noise_var*eye(pca.d);
+
+<span class="comment">% Compare to the empirical covariance of the data</span>
+C=cov(t');
+
+<span class="comment">% Plot covariances and comparison</span>
+figure
+subplot(2,2,1);
+imagesc(C);
+colormap <span class="string">gray</span>
+colorbar
+title(<span class="string">'Data Covariance using Cov'</span>);
+subplot(2,2,3);
+imagesc(CBayes);
+colormap <span class="string">gray</span>
+colorbar
+title(<span class="string">'Data Covariance using Bayes VPCA'</span>);
+subplot(2,2,2);
+imagesc(C-CBayes);
+colormap <span class="string">gray</span>
+colorbar
+title(<span class="string">'Difference'</span>);
+</pre>
+<pre class="codeoutput">Iteration 1: F = -2038.4654
+Iteration 2: F = -2019.1823, deltaF = 0.00946
+Iteration 3: F = -2008.7104, deltaF = 0.00519
+Iteration 4: F = -2001.4100, deltaF = 0.00363
+Iteration 5: F = -1996.4060, deltaF = 0.00250
+Iteration 6: F = -1992.9221, deltaF = 0.00175
+Iteration 7: F = -1990.5846, deltaF = 0.00117
+Iteration 8: F = -1989.0946, deltaF = 0.00075
+Iteration 9: F = -1988.0108, deltaF = 0.00054
+Iteration 10: F = -1986.9655, deltaF = 0.00053
+Iteration 11: F = -1985.8331, deltaF = 0.00057
+Iteration 12: F = -1984.7442, deltaF = 0.00055
+Iteration 13: F = -1983.9614, deltaF = 0.00039
+Iteration 14: F = -1983.5575, deltaF = 0.00020
+Iteration 15: F = -1983.3830, deltaF = 0.00009
+ 
+To recover eg 4 hidden sources
+project data, t, onto first 4 columns of factor matrix:
+W=pca.M_w(:,1:4);xhat=W'*t;
+ 
+A Bayesian estimate of the data covariance matrix
+is given by:
+obs_noise_var=(1/pca.mean_tau); CBayes=W*W'+obs_noise_var*eye(pca.d)
+</pre>
+<img vspace="5" hspace="5" src="demo_vpca_small_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_small_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_small_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_small_complete_04.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_small_complete_05.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_small_complete_06.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+close all
+clear all
+
+% This script demonstrates variational PCA using synthetic data. 
+% Data is generated from a known PCA generative model: y_n = W x_n + mu + e_n
+% where W is d*q - first example in Bishop's VPCA paper
+
+N=100;  % Observations
+d=10;   % Data dimensionality
+%q=d-1;
+q=3;    % Latent imensionality
+
+% Generate orthogonal latent directions
+W=randn(d,q);
+W=orth(W);
+
+% Generate latent sources
+x=randn(q,N);
+sd_x=diag([5,4,3,2,1,1,1,1,1]);% Standard deviations
+x=sd_x(1:q,1:q)*x;
+
+% Generate Gaussian sensor noise
+e=randn(d,N);
+% Generate constant mean offset
+mu=ones(d,1)*ones(1,N);
+
+% Final observed data
+%e=zeros(d,N);
+t=W*x+mu+e;
+
+% Run variational PCA
+pca=spm_vpca(t);
+
+% Visualise estimated factor matrices
+figure; imagesc(pca.M_w); colormap gray; title('Bayes estimate');
+figure; imagesc(pca.ml.W); colormap gray; title('ML estimate');
+
+% Plot convergence of variational free energy
+figure
+plot(pca.Fm_evol);
+xlabel('Iterations');
+ylabel('Neg. Free Energy');
+
+% Plot eigenspectrum
+figure
+plot(pca.ml.lambda);
+title('Eigenspectrum');
+
+% Plot inferred prior precision on latent factors
+figure
+plot(pca.mean_alpha);
+title('Prior precision of factors');
+
+% Project data into latent space using the top components
+disp(' ');
+disp('To recover eg 4 hidden sources')
+disp('project data, t, onto first 4 columns of factor matrix:');
+disp('W=pca.M_w(:,1:4);xhat=W''*t;');
+W=pca.M_w(:,1:4);
+xhat=W'*t;  % Reconstructed latent sources
+
+% Estimate Bayesian data covariance matrix
+disp(' ');
+disp('A Bayesian estimate of the data covariance matrix');
+disp('is given by:');
+disp('obs_noise_var=(1/pca.mean_tau); CBayes=W*W''+obs_noise_var*eye(pca.d)');
+obs_noise_var=(1/pca.mean_tau);
+CBayes=W*W'+obs_noise_var*eye(pca.d);
+
+% Compare to the empirical covariance of the data
+C=cov(t');
+
+% Plot covariances and comparison
+figure
+subplot(2,2,1);
+imagesc(C);
+colormap gray
+colorbar
+title('Data Covariance using Cov');
+subplot(2,2,3);
+imagesc(CBayes);
+colormap gray
+colorbar
+title('Data Covariance using Bayes VPCA');
+subplot(2,2,2);
+imagesc(C-CBayes);
+colormap gray
+colorbar
+title('Difference');
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>

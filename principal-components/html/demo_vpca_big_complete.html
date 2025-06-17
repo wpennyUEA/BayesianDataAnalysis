@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_vpca_big_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_vpca_big_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="comment">% This script compares Bayesian/variational PCA to classical maximum likelihood (ML)</span>
+<span class="comment">% PCA for dimensionality reduction</span>
+
+<span class="comment">% Load image</span>
+x=imread(<span class="string">'Alan.jpg'</span>,<span class="string">'jpg'</span>);
+
+<span class="comment">% Crop</span>
+startx=100;
+starty=300;
+N=256; <span class="comment">% Size of square cropped image (pixels)</span>
+
+<span class="comment">% Convert green chennel to double precision</span>
+xg=double(x(startx:startx+N-1,starty:starty+N-1,2));
+
+<span class="comment">% Centre image data</span>
+xg=xg-mean(mean(xg));
+
+<span class="comment">% Set maximum latent space dimensionality (number of components)</span>
+q=100;
+
+<span class="comment">% Run Variational PCA</span>
+pca=spm_vpca(xg,q);
+
+<span class="comment">% Posterior mean of weights: Bayesian estimate</span>
+figure; imagesc(pca.M_w); colormap <span class="string">gray</span>; title(<span class="string">'Bayes estimate'</span>);
+<span class="comment">% ML weights: Maximum Likelihood estimate</span>
+figure; imagesc(pca.ml.W(:,1:q)); colormap <span class="string">gray</span>; title(<span class="string">'ML estimate'</span>);
+
+<span class="comment">% Plot negative Free Energy over iterations</span>
+figure
+plot(pca.Fm_evol);
+xlabel(<span class="string">'Iterations'</span>);
+ylabel(<span class="string">'Neg. Free Energy'</span>);
+
+<span class="comment">% Plot eigenspectrum</span>
+figure
+plot(pca.ml.lambda);
+title(<span class="string">'Eigenspectrum'</span>);
+
+<span class="comment">% Plot the learned prior precisionfor each latent factor</span>
+figure
+plot(pca.mean_alpha);
+title(<span class="string">'Prior precision of factors'</span>);
+</pre>
+<pre class="codeoutput">Iteration 1: F = -304944.1433
+Iteration 2: F = -274775.8758, deltaF = 0.09893
+Iteration 3: F = -270246.2245, deltaF = 0.01648
+Iteration 4: F = -268502.0460, deltaF = 0.00645
+Iteration 5: F = -267576.8321, deltaF = 0.00345
+Iteration 6: F = -266971.5658, deltaF = 0.00226
+Iteration 7: F = -266506.3413, deltaF = 0.00174
+Iteration 8: F = -266105.3487, deltaF = 0.00150
+Iteration 9: F = -265741.8319, deltaF = 0.00137
+Iteration 10: F = -265415.3994, deltaF = 0.00123
+Iteration 11: F = -265129.7983, deltaF = 0.00108
+Iteration 12: F = -264883.2610, deltaF = 0.00093
+Iteration 13: F = -264671.9839, deltaF = 0.00080
+Iteration 14: F = -264490.9105, deltaF = 0.00068
+Iteration 15: F = -264334.1967, deltaF = 0.00059
+Iteration 16: F = -264196.4934, deltaF = 0.00052
+Iteration 17: F = -264073.4701, deltaF = 0.00047
+Iteration 18: F = -263962.2470, deltaF = 0.00042
+Iteration 19: F = -263861.7715, deltaF = 0.00038
+Iteration 20: F = -263772.2511, deltaF = 0.00034
+Iteration 21: F = -263693.5310, deltaF = 0.00030
+Iteration 22: F = -263624.0480, deltaF = 0.00026
+Iteration 23: F = -263561.5329, deltaF = 0.00024
+Iteration 24: F = -263504.6214, deltaF = 0.00022
+Iteration 25: F = -263453.3043, deltaF = 0.00019
+Iteration 26: F = -263407.6867, deltaF = 0.00017
+Iteration 27: F = -263366.9068, deltaF = 0.00015
+Iteration 28: F = -263329.5131, deltaF = 0.00014
+Iteration 29: F = -263294.3900, deltaF = 0.00013
+Iteration 30: F = -263261.0014, deltaF = 0.00013
+Iteration 31: F = -263229.1820, deltaF = 0.00012
+Iteration 32: F = -263199.2534, deltaF = 0.00011
+Iteration 33: F = -263171.9256, deltaF = 0.00010
+Iteration 34: F = -263147.4778, deltaF = 0.00009
+</pre>
+<img vspace="5" hspace="5" src="demo_vpca_big_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_big_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_big_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_big_complete_04.png" alt=""> <img vspace="5" hspace="5" src="demo_vpca_big_complete_05.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+% This script compares Bayesian/variational PCA to classical maximum likelihood (ML)
+% PCA for dimensionality reduction
+
+% Load image
+x=imread('Alan.jpg','jpg');
+
+% Crop
+startx=100;
+starty=300;
+N=256; % Size of square cropped image (pixels)
+
+% Convert green chennel to double precision
+xg=double(x(startx:startx+N-1,starty:starty+N-1,2));
+
+% Centre image data
+xg=xg-mean(mean(xg));
+
+% Set maximum latent space dimensionality (number of components)
+q=100;
+
+% Run Variational PCA
+pca=spm_vpca(xg,q);
+
+% Posterior mean of weights: Bayesian estimate
+figure; imagesc(pca.M_w); colormap gray; title('Bayes estimate');
+% ML weights: Maximum Likelihood estimate
+figure; imagesc(pca.ml.W(:,1:q)); colormap gray; title('ML estimate');
+
+% Plot negative Free Energy over iterations
+figure
+plot(pca.Fm_evol);
+xlabel('Iterations');
+ylabel('Neg. Free Energy');
+
+% Plot eigenspectrum
+figure
+plot(pca.ml.lambda);
+title('Eigenspectrum');
+
+% Plot the learned prior precisionfor each latent factor
+figure
+plot(pca.mean_alpha);
+title('Prior precision of factors');
+
+##### SOURCE END #####
+-->
+</body>
+</html>
