@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_anova1_chick_weights_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-17">
+<meta name="DC.source" content="demo_anova1_chick_weights_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This is comparing the weights of the chicks that are fed with either</span>
+<span class="comment">% 'Horsebean' or 'Linseed' using Bayesian One-Way ANOVA, with two methods -</span>
+<span class="comment">% Gaussian and T-Distribution</span>
+
+<span class="comment">% Name your groups here</span>
+group(1).name=<span class="string">'Horsebean'</span>;
+group(2).name=<span class="string">'Linseed'</span>;
+
+<span class="comment">% Name the apporiaches for Bayes Factor calculations</span>
+approach(1).name=<span class="string">'Default'</span>;
+approach(2).name=<span class="string">'Gaussian'</span>;
+approach(3).name=<span class="string">'T'</span>;
+
+<span class="comment">% Chick Weights Example Data from "R"</span>
+group(1).x = [179,160,136,227,217,168,108,124,143,140];
+group(2).x = [309,229,181,141,260,203,148,169,213,257,244,271];
+
+<span class="comment">% Calculate sample sizes</span>
+N1 = length(group(1).x);
+N2 = length(group(2).x);
+
+<span class="comment">% Default Bayes Factor from Rouder</span>
+<span class="comment">% implemented by Schwarzkopf</span>
+<span class="comment">% glm_anova1 performs a simple one-way ANOVA</span>
+[p,stats] = glm_anova1 (group);
+t = sqrt(stats.F);  <span class="comment">% Convert F statistic to t statistic</span>
+DBF = t2smpbf(t,N1,N2); <span class="comment">% Calculate Bayes Factor</span>
+
+<span class="comment">% Calculate Log Bayes Factor using two methods - Gaussian and</span>
+<span class="comment">% T-Distribution methods</span>
+logBFG = bayes_glm_anova1 (group,<span class="string">'G'</span>);
+logBFT = bayes_glm_anova1 (group,<span class="string">'T'</span>);
+
+<span class="comment">% Display results</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'R Bayes Factor Package:'</span>);
+disp(<span class="string">'BF=5.98:'</span>);
+disp(<span class="string">' '</span>);
+disp(<span class="string">'Matlab Default Bayes Factor:'</span>);
+disp(DBF);
+disp(<span class="string">'Matlab Default Log Bayes Factor:'</span>);
+log(DBF)
+
+<span class="comment">% Using Gaussian method</span>
+disp(<span class="string">'Gaussian LogBF:'</span>);
+disp(logBFG);
+
+<span class="comment">% Using T-Distribution method</span>
+disp(<span class="string">'T-Dist LogBF:'</span>);
+disp(logBFT);
+</pre>
+<pre class="codeoutput"> 
+R Bayes Factor Package:
+BF=5.98:
+ 
+Matlab Default Bayes Factor:
+    5.9756
+
+Matlab Default Log Bayes Factor:
+
+ans =
+
+    1.7877
+
+Gaussian LogBF:
+    1.6534
+
+T-Dist LogBF:
+    2.1103
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+clear all
+close all
+
+% This is comparing the weights of the chicks that are fed with either
+% 'Horsebean' or 'Linseed' using Bayesian One-Way ANOVA, with two methods -
+% Gaussian and T-Distribution
+
+% Name your groups here
+group(1).name='Horsebean';
+group(2).name='Linseed';
+
+% Name the apporiaches for Bayes Factor calculations
+approach(1).name='Default';
+approach(2).name='Gaussian';
+approach(3).name='T';
+
+% Chick Weights Example Data from "R" 
+group(1).x = [179,160,136,227,217,168,108,124,143,140];
+group(2).x = [309,229,181,141,260,203,148,169,213,257,244,271];
+
+% Calculate sample sizes
+N1 = length(group(1).x);
+N2 = length(group(2).x);
+
+% Default Bayes Factor from Rouder
+% implemented by Schwarzkopf
+% glm_anova1 performs a simple one-way ANOVA
+[p,stats] = glm_anova1 (group);
+t = sqrt(stats.F);  % Convert F statistic to t statistic
+DBF = t2smpbf(t,N1,N2); % Calculate Bayes Factor
+
+% Calculate Log Bayes Factor using two methods - Gaussian and
+% T-Distribution methods
+logBFG = bayes_glm_anova1 (group,'G');
+logBFT = bayes_glm_anova1 (group,'T');
+
+% Display results
+disp(' ');
+disp('R Bayes Factor Package:');
+disp('BF=5.98:');
+disp(' ');
+disp('Matlab Default Bayes Factor:');
+disp(DBF);
+disp('Matlab Default Log Bayes Factor:');
+log(DBF)
+
+% Using Gaussian method
+disp('Gaussian LogBF:');
+disp(logBFG);
+
+% Using T-Distribution method
+disp('T-Dist LogBF:');
+disp(logBFT);
+
+
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
