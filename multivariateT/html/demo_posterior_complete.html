@@ -1,0 +1,637 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_posterior_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_posterior_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script demonstrates Bayesian inference for multivaraite Gaussian</span>
+<span class="comment">% parameters (mean and covariance) using the Normal-Wishart conjugate prior</span>
+
+<span class="comment">% Set dimensionality</span>
+P=2;
+
+<span class="comment">% Define Normal-Wishart prior parameters</span>
+a0=P/2; <span class="comment">% Degrees of freedom (shape)</span>
+B0=diag([1 1]); <span class="comment">% Scale matrix (prior precision scale)</span>
+beta0=0.01; <span class="comment">% Prior strength for mean precision</span>
+m0=zeros(P,1);  <span class="comment">% Prior mean vector</span>
+
+<span class="comment">% Calculate prior predictive parameters - for multivariate t distribution</span>
+mu_w0=m0;
+w_s=(beta0/(beta0+1))*(a0-0.5*(P-1));   <span class="comment">% Scaling</span>
+Lambda_w0=w_s*inv(B0);  <span class="comment">% Scale matrix</span>
+v_w0=2*a0-P+1;  <span class="comment">% Degrees of freedom</span>
+
+<span class="comment">% Plot prior predictive density</span>
+figure
+subplot(1,2,1);
+mvt_plot2D (mu_w0,Lambda_w0,v_w0);
+axis <span class="string">square</span>
+title(<span class="string">'n=0'</span>);
+pause(0.1);
+
+<span class="comment">% Store prior parameters</span>
+M.prior.P=P;
+M.prior.a=a0;
+M.prior.B=B0;
+M.prior.beta=beta0;
+M.prior.m=m0;
+
+<span class="comment">% Generate data</span>
+new_data=0;
+<span class="keyword">if</span> new_data
+    <span class="comment">% True parameters</span>
+    mu=[10,7]';
+    s1=2;
+    s2=0.5;
+    r=-0.7; <span class="comment">% Correlation between variables</span>
+    <span class="comment">%r=0;</span>
+    c12=r*s1*s2;
+    C=[s1^2 c12; c12 s2^2]; <span class="comment">% Covariance matrix</span>
+    Lambda=inv(C);  <span class="comment">% Precision matrix</span>
+
+    N=32;   <span class="comment">% Sample size</span>
+    x = spm_normrnd(mu, C, N);
+    save <span class="string">xdata</span> <span class="string">x</span> <span class="string">N</span> <span class="string">s1</span> <span class="string">s2</span> <span class="string">r</span> <span class="string">mu</span> <span class="string">C</span>
+<span class="keyword">else</span>
+    load <span class="string">xdata</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Set plot limits</span>
+R.x1_min=-5;
+R.x1_max=20;
+R.x2_min=3;
+R.x2_max=10;
+
+<span class="comment">% Plot posterior predictive for each data point</span>
+<span class="keyword">for</span> n=1:N,
+    M = spm_nwpost (M,x(:,1:n));    <span class="comment">% Update Normal-Wishart posterior with n data points</span>
+    clf;
+
+    <span class="comment">% Plot updated multivariate t posterior predictive</span>
+    subplot(1,2,1);
+    mvt_plot2D (M.post.mu_w,M.post.Lambda_w,M.post.v_w,R);
+    axis <span class="string">square</span>
+    hold <span class="string">on</span>
+    <span class="keyword">for</span> j=1:n,
+        plot(x(1,j),x(2,j),<span class="string">'kx'</span>,<span class="string">'MarkerSize'</span>,10);
+    <span class="keyword">end</span>
+    title(sprintf(<span class="string">'MV-T, n=%d'</span>,n));
+
+    <span class="keyword">if</span> n&gt;2
+        <span class="comment">% Compute sample mean and covariance - frequentist estimates</span>
+        sx=x(:,1:n);
+        mw=mean(sx,2);
+        Sw=cov(sx',1);
+
+        <span class="comment">% Plot Gaussian with sample mean and covariance</span>
+        subplot(1,2,2);
+        mvn_plot2D (mw,Sw,R);
+        axis <span class="string">square</span>
+        hold <span class="string">on</span>
+        <span class="keyword">for</span> j=1:n,
+            plot(x(1,j),x(2,j),<span class="string">'kx'</span>,<span class="string">'MarkerSize'</span>,10);
+        <span class="keyword">end</span>
+        title(sprintf(<span class="string">'MV-Gauss, n=%d'</span>,n));
+    <span class="keyword">end</span>
+
+    disp(<span class="string">'Posterior Mean NW-Cov:'</span>);
+    M.post.B/M.post.a   <span class="comment">% expected covariance matrix</span>
+
+    drawnow
+    <span class="comment">%pause(0.1);</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Calculate Maximum-Likelihood Estimates</span>
+sml_1=sqrt(Sw(1,1));
+sml_2=sqrt(Sw(2,2));
+rml=Sw(1,2)/(sml_1*sml_2);
+
+<span class="comment">% Sample precisions from Wishart prior</span>
+Ns=1000;
+L=spm_wishrnd(M.prior.B,M.prior.a,Ns);  <span class="comment">% Samples from Wishart prior</span>
+<span class="keyword">for</span> s=1:Ns,
+    C=inv(squeeze(L(:,:,s)));
+    sig_1(s)=sqrt(C(1,1));
+    sig_2(s)=sqrt(C(2,2));
+    rw(s)=C(1,2)/(sig_1(s)*sig_2(s));   <span class="comment">% Correlation from sampled covariance</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Plot prior samples</span>
+figure
+plot(sig_1,sig_2,<span class="string">'.'</span>);
+hold <span class="string">on</span>
+set(gca,<span class="string">'FontSize'</span>,18);
+xlabel(<span class="string">'\sigma_1'</span>);
+ylabel(<span class="string">'\sigma_2'</span>);
+title(<span class="string">'Prior'</span>);
+
+<span class="comment">% Sample precisions from Wishart posterior</span>
+Ns=1000;
+L=spm_wishrnd(M.post.B,M.post.a,Ns);    <span class="comment">% Samples from Wishart posterior</span>
+<span class="keyword">for</span> s=1:Ns,
+    C=inv(squeeze(L(:,:,s)));
+    sig_1(s)=sqrt(C(1,1));
+    sig_2(s)=sqrt(C(2,2));
+    rw(s)=C(1,2)/(sig_1(s)*sig_2(s));   <span class="comment">% Correlation from sampled covariance</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Plot posterior samples</span>
+figure
+plot(sig_1,sig_2,<span class="string">'.'</span>);
+hold <span class="string">on</span>
+grid <span class="string">on</span>
+plot(s1,s2,<span class="string">'rx'</span>,<span class="string">'MarkerSize'</span>,20,<span class="string">'LineWidth'</span>,2); <span class="comment">% Include true values</span>
+plot(sml_1,sml_2,<span class="string">'gx'</span>,<span class="string">'MarkerSize'</span>,20,<span class="string">'LineWidth'</span>,2);   <span class="comment">% Include ML estimates</span>
+set(gca,<span class="string">'FontSize'</span>,18);
+xlabel(<span class="string">'\sigma_1'</span>);
+ylabel(<span class="string">'\sigma_2'</span>);
+title(<span class="string">'Posterior'</span>);
+
+<span class="comment">% Histogram of sampled correlations (includes lines for ML and true)</span>
+figure
+[n,c]=hist(rw,20);
+n=n/sum(n);
+bar(c,n);
+mn=max(n);
+set(gca,<span class="string">'FontSize'</span>,18);
+xlabel(<span class="string">'r'</span>);
+hold <span class="string">on</span>
+plot([rml rml],[0 mn],<span class="string">'g'</span>,<span class="string">'LineWidth'</span>,4);
+plot([r r],[0 mn],<span class="string">'r'</span>,<span class="string">'LineWidth'</span>,4);
+grid <span class="string">on</span>
+ylabel(<span class="string">'p(r|w)'</span>);
+</pre>
+<pre class="codeoutput">Posterior Mean NW-Cov:
+
+ans =
+
+    0.8833    0.2228
+    0.2228    0.8958
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    0.8212   -0.0495
+   -0.0495    0.9491
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    5.3387   -0.5355
+   -0.5355    0.8118
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.4927   -0.4647
+   -0.4647    0.6843
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.7789   -0.6280
+   -0.6280    0.6434
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.2906   -0.5874
+   -0.5874    0.5762
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    6.2499   -0.8863
+   -0.8863    0.5666
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    5.8520   -0.8586
+   -0.8586    0.5263
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    5.7006   -0.9341
+   -0.9341    0.5404
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    5.2456   -0.8821
+   -0.8821    0.5286
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    5.4751   -0.9718
+   -0.9718    0.5272
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    5.1931   -0.9320
+   -0.9320    0.4976
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.9458   -0.8710
+   -0.8710    0.4644
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.7758   -0.8727
+   -0.8727    0.4580
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.8274   -0.8316
+   -0.8316    0.4314
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.5756   -0.7949
+   -0.7949    0.4129
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.4404   -0.7211
+   -0.7211    0.4008
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.2287   -0.6866
+   -0.6866    0.3810
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.0365   -0.6629
+   -0.6629    0.3717
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.0465   -0.6521
+   -0.6521    0.3567
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.8983   -0.6070
+   -0.6070    0.3512
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.1678   -0.7053
+   -0.7053    0.3719
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    4.0361   -0.6587
+   -0.6587    0.3667
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.8811   -0.6341
+   -0.6341    0.3557
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.7387   -0.6152
+   -0.6152    0.3574
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.6454   -0.6055
+   -0.6055    0.3484
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.5216   -0.5840
+   -0.5840    0.3366
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.4095   -0.5636
+   -0.5636    0.3256
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.3055   -0.5450
+   -0.5450    0.3151
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.2798   -0.5277
+   -0.5277    0.3053
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.3954   -0.6034
+   -0.6034    0.3352
+
+Posterior Mean NW-Cov:
+
+ans =
+
+    3.3396   -0.6190
+   -0.6190    0.3506
+
+</pre>
+<img vspace="5" hspace="5" src="demo_posterior_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_posterior_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_posterior_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_posterior_complete_04.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script demonstrates Bayesian inference for multivaraite Gaussian
+% parameters (mean and covariance) using the Normal-Wishart conjugate prior
+
+% Set dimensionality
+P=2;
+
+% Define Normal-Wishart prior parameters
+a0=P/2; % Degrees of freedom (shape)
+B0=diag([1 1]); % Scale matrix (prior precision scale)
+beta0=0.01; % Prior strength for mean precision
+m0=zeros(P,1);  % Prior mean vector
+
+% Calculate prior predictive parameters - for multivariate t distribution
+mu_w0=m0;
+w_s=(beta0/(beta0+1))*(a0-0.5*(P-1));   % Scaling
+Lambda_w0=w_s*inv(B0);  % Scale matrix
+v_w0=2*a0-P+1;  % Degrees of freedom
+
+% Plot prior predictive density
+figure
+subplot(1,2,1);
+mvt_plot2D (mu_w0,Lambda_w0,v_w0);
+axis square
+title('n=0');
+pause(0.1);
+
+% Store prior parameters
+M.prior.P=P;
+M.prior.a=a0;
+M.prior.B=B0;
+M.prior.beta=beta0;
+M.prior.m=m0;
+
+% Generate data
+new_data=0;
+if new_data
+    % True parameters
+    mu=[10,7]';
+    s1=2;
+    s2=0.5;
+    r=-0.7; % Correlation between variables
+    %r=0;
+    c12=r*s1*s2;
+    C=[s1^2 c12; c12 s2^2]; % Covariance matrix
+    Lambda=inv(C);  % Precision matrix
+    
+    N=32;   % Sample size
+    x = spm_normrnd(mu, C, N);
+    save xdata x N s1 s2 r mu C
+else
+    load xdata
+end
+
+% Set plot limits
+R.x1_min=-5;
+R.x1_max=20;
+R.x2_min=3;
+R.x2_max=10;
+
+% Plot posterior predictive for each data point
+for n=1:N,
+    M = spm_nwpost (M,x(:,1:n));    % Update Normal-Wishart posterior with n data points
+    clf;
+    
+    % Plot updated multivariate t posterior predictive
+    subplot(1,2,1);
+    mvt_plot2D (M.post.mu_w,M.post.Lambda_w,M.post.v_w,R);
+    axis square
+    hold on
+    for j=1:n,
+        plot(x(1,j),x(2,j),'kx','MarkerSize',10);
+    end
+    title(sprintf('MV-T, n=%d',n));
+    
+    if n>2
+        % Compute sample mean and covariance - frequentist estimates
+        sx=x(:,1:n);
+        mw=mean(sx,2);
+        Sw=cov(sx',1);
+
+        % Plot Gaussian with sample mean and covariance
+        subplot(1,2,2);
+        mvn_plot2D (mw,Sw,R);
+        axis square
+        hold on
+        for j=1:n,
+            plot(x(1,j),x(2,j),'kx','MarkerSize',10);
+        end
+        title(sprintf('MV-Gauss, n=%d',n));
+    end
+    
+    disp('Posterior Mean NW-Cov:');
+    M.post.B/M.post.a   % expected covariance matrix
+    
+    drawnow
+    %pause(0.1);
+end
+
+% Calculate Maximum-Likelihood Estimates
+sml_1=sqrt(Sw(1,1));
+sml_2=sqrt(Sw(2,2));
+rml=Sw(1,2)/(sml_1*sml_2);
+    
+% Sample precisions from Wishart prior
+Ns=1000;
+L=spm_wishrnd(M.prior.B,M.prior.a,Ns);  % Samples from Wishart prior
+for s=1:Ns,
+    C=inv(squeeze(L(:,:,s)));
+    sig_1(s)=sqrt(C(1,1));
+    sig_2(s)=sqrt(C(2,2));
+    rw(s)=C(1,2)/(sig_1(s)*sig_2(s));   % Correlation from sampled covariance
+end
+
+% Plot prior samples
+figure
+plot(sig_1,sig_2,'.');
+hold on
+set(gca,'FontSize',18);
+xlabel('\sigma_1');
+ylabel('\sigma_2');
+title('Prior');
+
+% Sample precisions from Wishart posterior
+Ns=1000;
+L=spm_wishrnd(M.post.B,M.post.a,Ns);    % Samples from Wishart posterior
+for s=1:Ns,
+    C=inv(squeeze(L(:,:,s)));
+    sig_1(s)=sqrt(C(1,1));
+    sig_2(s)=sqrt(C(2,2));
+    rw(s)=C(1,2)/(sig_1(s)*sig_2(s));   % Correlation from sampled covariance
+end
+
+% Plot posterior samples
+figure
+plot(sig_1,sig_2,'.');
+hold on
+grid on
+plot(s1,s2,'rx','MarkerSize',20,'LineWidth',2); % Include true values
+plot(sml_1,sml_2,'gx','MarkerSize',20,'LineWidth',2);   % Include ML estimates
+set(gca,'FontSize',18);
+xlabel('\sigma_1');
+ylabel('\sigma_2');
+title('Posterior');
+
+% Histogram of sampled correlations (includes lines for ML and true)
+figure
+[n,c]=hist(rw,20);
+n=n/sum(n);
+bar(c,n);
+mn=max(n);
+set(gca,'FontSize',18);
+xlabel('r');
+hold on
+plot([rml rml],[0 mn],'g','LineWidth',4);
+plot([r r],[0 mn],'r','LineWidth',4);
+grid on
+ylabel('p(r|w)');
+##### SOURCE END #####
+-->
+</body>
+</html>
