@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_cva_order_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_cva_order_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script demonstrates Canonical Variates Analysis (CVA) and how to</span>
+<span class="comment">% select the optimal number of shared components to best capture the</span>
+<span class="comment">% correlations structure between the two datasets</span>
+
+<span class="comment">% Set dimensions of both datasets</span>
+d1=3;
+d2=5;
+N=100;
+
+disp(<span class="string">'Model order selection'</span>);
+
+<span class="comment">% Sex max number of canonical vectors to test</span>
+<span class="comment">%m=min([d1,d2])</span>
+m=3;
+
+<span class="comment">% Generate true factor loading matrices</span>
+W1=10*randn(d1,m);
+W2=10*randn(d2,m);
+
+<span class="comment">% Observation noise SD</span>
+sig=1;
+
+<span class="comment">% Observation noise covariance</span>
+E1=sig*randn(d1,N);
+E2=sig*randn(d2,N);
+
+<span class="comment">% Generate latent variables</span>
+<span class="keyword">if</span> m==0
+    X1=E1;
+    X2=E2;
+<span class="keyword">else</span>
+    <span class="comment">% Generate latent source signals</span>
+    Z=randn(m,N);
+    <span class="comment">% Generate observed data (linear combination of latent variables + noise)</span>
+    X1=W1*Z+E1;
+    X2=W2*Z+E2;
+<span class="keyword">end</span>
+
+<span class="comment">% Arrays to store model evidence and criteria</span>
+<span class="keyword">for</span> i=1:4,
+    <span class="comment">% Probabilistic CVA with i-1 canonical vectors</span>
+    CVA = spm_cva_prob (X1,X2,i-1);
+    L(i)=CVA.L; <span class="comment">% Log-likelihood</span>
+    bic(i)=CVA.bic; <span class="comment">% Bayesian Information Criterion</span>
+    aic(i)=CVA.aic; <span class="comment">% Akaike Information Criterion</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Plot model evidence and information criteria vs number of canonical vectors</span>
+figure
+plot([0:3],L);
+hold <span class="string">on</span>
+plot([0:3],bic,<span class="string">'r'</span>);
+plot([0:3],aic,<span class="string">'g'</span>);
+xlabel(<span class="string">'Number of Canonical Vectors'</span>);
+legend(<span class="string">'LogLike'</span>,<span class="string">'BIC'</span>,<span class="string">'AIC'</span>);
+</pre>
+<pre class="codeoutput">Model order selection
+</pre>
+<img vspace="5" hspace="5" src="demo_cva_order_complete_01.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script demonstrates Canonical Variates Analysis (CVA) and how to
+% select the optimal number of shared components to best capture the
+% correlations structure between the two datasets
+
+% Set dimensions of both datasets
+d1=3;
+d2=5;
+N=100;
+
+disp('Model order selection');
+
+% Sex max number of canonical vectors to test
+%m=min([d1,d2])
+m=3;
+
+% Generate true factor loading matrices
+W1=10*randn(d1,m);
+W2=10*randn(d2,m);
+
+% Observation noise SD
+sig=1;
+
+% Observation noise covariance
+E1=sig*randn(d1,N);
+E2=sig*randn(d2,N);
+
+% Generate latent variables
+if m==0
+    X1=E1;
+    X2=E2;
+else
+    % Generate latent source signals
+    Z=randn(m,N);
+    % Generate observed data (linear combination of latent variables + noise)
+    X1=W1*Z+E1;
+    X2=W2*Z+E2;
+end
+
+% Arrays to store model evidence and criteria
+for i=1:4,
+    % Probabilistic CVA with i-1 canonical vectors
+    CVA = spm_cva_prob (X1,X2,i-1);
+    L(i)=CVA.L; % Log-likelihood
+    bic(i)=CVA.bic; % Bayesian Information Criterion
+    aic(i)=CVA.aic; % Akaike Information Criterion
+end
+
+% Plot model evidence and information criteria vs number of canonical vectors
+figure
+plot([0:3],L);
+hold on
+plot([0:3],bic,'r');
+plot([0:3],aic,'g');
+xlabel('Number of Canonical Vectors');
+legend('LogLike','BIC','AIC');
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
