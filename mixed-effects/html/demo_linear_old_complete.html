@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_linear_old_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_linear_old_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script compares Canonical Correlation Analysis (CCA) and</span>
+<span class="comment">% Nultivariate Linear Models (LML) for predicting simple linear mapping</span>
+<span class="comment">% between two datasets</span>
+
+<span class="comment">% Simulation parameters</span>
+rho = 0.5;  <span class="comment">% Relationship between CCA and MLM complexity</span>
+d1 = 50;    <span class="comment">% Dimensionality of dataset 1</span>
+d2 = 50;    <span class="comment">% Dimensionality of dataset 2</span>
+
+<span class="comment">% Number of latent components in CCA</span>
+k = ceil(2*d1*d2/(d1+d2)*rho);
+m = 1;  <span class="comment">% Number of clusters (1 = standard CCA)</span>
+
+N = 1000;   <span class="comment">% Sample number</span>
+sigma = 0.1;    <span class="comment">% Noise SD</span>
+e1 = sigma*randn(d1,N); <span class="comment">% Add noise to x1</span>
+
+<span class="comment">% Generate synthetic data. x1 is a linear transformation of x2 + noise</span>
+x2 = randn(d2,N);
+T = randn(d1,d2);   <span class="comment">% True transformation matrix</span>
+x1 = T*x2 + e1;
+<span class="comment">% x1 = [x1;ones(1,N)];</span>
+<span class="comment">% x2 = [x2;ones(1,N)];</span>
+
+<span class="comment">% Fit CCA model</span>
+options.maxIter = 512;
+options.tol = 10^(-6);
+tic; cca = vbcca(x1,x2,k,m,options); els=toc    <span class="comment">% Variational bayesian CCA</span>
+
+<span class="comment">% Predict x1 from x2</span>
+con.Gamma1 = eye(d1);
+con.Gamma2 = eye(d2);
+[x1pred,gamma,p1,T12] = vbcca_cond_subspace (cca,x2,con);
+x1_r2 = compute_r2 (x1',x1pred');
+
+<span class="comment">% Predict x2 from x1</span>
+x2pred = vbcca_cond_context (cca,x1,con);
+x2_r2 = compute_r2 (x2',x2pred');
+
+<span class="comment">% Plot true vs estimated transformation matrix</span>
+<span class="comment">% for i=1:d1, subplot(d1,1,i); plot(x1(i,:),'b'); hold on; plot(x1pred(i,:),'r'); end</span>
+figure
+subplot(2,2,1);
+imagesc(T); colorbar
+title(<span class="string">'True'</span>)
+subplot(2,2,2);
+imagesc(T12{1}); colorbar
+title(<span class="string">'CCA Estimated'</span>)
+subplot(2,2,3);
+imagesc(T-T12{1}); colorbar
+title(<span class="string">'Difference'</span>)
+
+<span class="comment">% Fit MLM model</span>
+options.pr=<span class="string">'global'</span>;
+options.ml_only = 0;
+options.verbose = 1;
+options.pseudo = 1;
+
+<span class="comment">% Estimate transformations</span>
+tic; txt1 = evalc(<span class="string">'mlm_r1 = spm_mlm_bayes(x1'',x2'',options);'</span>); toc <span class="comment">% predict region1 data</span>
+tic; txt2 = evalc(<span class="string">'mlm_r2 = spm_mlm_bayes(x2'',x1'',options);'</span>); toc <span class="comment">% predict region2 data</span>
+
+<span class="comment">% Predict using learned weights</span>
+x1hat = mlm_r1.wmean'*x2;
+x2hat = mlm_r2.wmean'*x1;
+x1_r2_mlm = compute_r2 (x1',x1hat');
+x2_r2_mlm = compute_r2 (x2',x2hat');
+
+<span class="comment">% Plot true vs MLM-estimated weights</span>
+figure
+subplot(2,2,1);
+imagesc(T); colorbar
+title(<span class="string">'True'</span>)
+subplot(2,2,2);
+imagesc(mlm_r1.wmean'); colorbar
+title(<span class="string">'MLM Estimated'</span>)
+subplot(2,2,3);
+imagesc(T-mlm_r1.wmean'); colorbar
+title(<span class="string">'Difference'</span>)
+
+<span class="comment">% Compare prediction R^2 from CCA and MLM</span>
+figure
+plot(x1_r2);
+hold <span class="string">on</span>
+plot(x1_r2_mlm,<span class="string">'r'</span>);
+legend({<span class="string">'CCA'</span>,<span class="string">'MLM'</span>})
+xlabel(<span class="string">'x1 variable'</span>)
+ylabel(<span class="string">'R^2'</span>)
+grid <span class="string">on</span>
+figure
+plot(x2_r2);
+hold <span class="string">on</span>
+plot(x2_r2_mlm,<span class="string">'r'</span>);
+legend({<span class="string">'CCA'</span>,<span class="string">'MLM'</span>})
+xlabel(<span class="string">'x2 variable'</span>)
+ylabel(<span class="string">'R^2'</span>)
+grid <span class="string">on</span>
+
+<span class="comment">% Compare model complexity (parameter number)</span>
+p_CCA = m*k*(d1+d2);
+p_MLM = 2*d1*d2;
+
+disp(sprintf(<span class="string">'Number of CCA params = %d'</span>,p_CCA));
+disp(sprintf(<span class="string">'Number of MLM params = %d'</span>,p_MLM));
+</pre>
+<pre class="codeoutput">Replicate 1, 1 iterations, total sum of distances = 2.48933e+06.
+Best total sum of distances = 2.48933e+06
+Iteration64, Lower bound:-135825.1567
+Iteration128, Lower bound:-135744.3993
+Iteration192, Lower bound:-135706.3481
+Iteration256, Lower bound:-135675.9332
+Iteration320, Lower bound:-135648.847
+Iteration384, Lower bound:-135623.9973
+Iteration448, Lower bound:-135600.8929
+Iteration512, Lower bound:-135579.2308
+
+els =
+
+   12.7980
+
+Elapsed time is 114.861047 seconds.
+Elapsed time is 115.796143 seconds.
+Number of CCA params = 2500
+Number of MLM params = 5000
+</pre>
+<img vspace="5" hspace="5" src="demo_linear_old_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_old_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_old_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_linear_old_complete_04.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script compares Canonical Correlation Analysis (CCA) and
+% Nultivariate Linear Models (LML) for predicting simple linear mapping
+% between two datasets
+
+% Simulation parameters
+rho = 0.5;  % Relationship between CCA and MLM complexity
+d1 = 50;    % Dimensionality of dataset 1
+d2 = 50;    % Dimensionality of dataset 2
+
+% Number of latent components in CCA
+k = ceil(2*d1*d2/(d1+d2)*rho); 
+m = 1;  % Number of clusters (1 = standard CCA)
+
+N = 1000;   % Sample number
+sigma = 0.1;    % Noise SD
+e1 = sigma*randn(d1,N); % Add noise to x1
+
+% Generate synthetic data. x1 is a linear transformation of x2 + noise
+x2 = randn(d2,N);
+T = randn(d1,d2);   % True transformation matrix
+x1 = T*x2 + e1;
+% x1 = [x1;ones(1,N)];
+% x2 = [x2;ones(1,N)];
+
+% Fit CCA model
+options.maxIter = 512;
+options.tol = 10^(-6);
+tic; cca = vbcca(x1,x2,k,m,options); els=toc    % Variational bayesian CCA
+
+% Predict x1 from x2
+con.Gamma1 = eye(d1);
+con.Gamma2 = eye(d2);
+[x1pred,gamma,p1,T12] = vbcca_cond_subspace (cca,x2,con);
+x1_r2 = compute_r2 (x1',x1pred');
+
+% Predict x2 from x1
+x2pred = vbcca_cond_context (cca,x1,con);
+x2_r2 = compute_r2 (x2',x2pred');
+
+% Plot true vs estimated transformation matrix
+% for i=1:d1, subplot(d1,1,i); plot(x1(i,:),'b'); hold on; plot(x1pred(i,:),'r'); end
+figure
+subplot(2,2,1);
+imagesc(T); colorbar
+title('True')
+subplot(2,2,2);
+imagesc(T12{1}); colorbar
+title('CCA Estimated')
+subplot(2,2,3);
+imagesc(T-T12{1}); colorbar
+title('Difference')
+
+% Fit MLM model
+options.pr='global';
+options.ml_only = 0;
+options.verbose = 1;
+options.pseudo = 1;
+
+% Estimate transformations
+tic; txt1 = evalc('mlm_r1 = spm_mlm_bayes(x1'',x2'',options);'); toc % predict region1 data
+tic; txt2 = evalc('mlm_r2 = spm_mlm_bayes(x2'',x1'',options);'); toc % predict region2 data
+
+% Predict using learned weights
+x1hat = mlm_r1.wmean'*x2;
+x2hat = mlm_r2.wmean'*x1;
+x1_r2_mlm = compute_r2 (x1',x1hat');
+x2_r2_mlm = compute_r2 (x2',x2hat');
+
+% Plot true vs MLM-estimated weights
+figure
+subplot(2,2,1);
+imagesc(T); colorbar
+title('True')
+subplot(2,2,2);
+imagesc(mlm_r1.wmean'); colorbar
+title('MLM Estimated')
+subplot(2,2,3);
+imagesc(T-mlm_r1.wmean'); colorbar
+title('Difference')
+
+% Compare prediction R^2 from CCA and MLM
+figure
+plot(x1_r2);
+hold on
+plot(x1_r2_mlm,'r');
+legend({'CCA','MLM'})
+xlabel('x1 variable')
+ylabel('R^2')
+grid on
+figure
+plot(x2_r2);
+hold on
+plot(x2_r2_mlm,'r');
+legend({'CCA','MLM'})
+xlabel('x2 variable')
+ylabel('R^2')
+grid on
+
+% Compare model complexity (parameter number)
+p_CCA = m*k*(d1+d2);
+p_MLM = 2*d1*d2;
+
+disp(sprintf('Number of CCA params = %d',p_CCA));
+disp(sprintf('Number of MLM params = %d',p_MLM));
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
