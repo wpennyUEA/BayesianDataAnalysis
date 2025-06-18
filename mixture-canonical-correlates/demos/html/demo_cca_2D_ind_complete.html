@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_cca_2D_ind_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_cca_2D_ind_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script uses Bayesian CCA to estimate the factor matrices of two</span>
+<span class="comment">% independent 2D data sources</span>
+
+<span class="comment">% Data points</span>
+N = 500;
+
+<span class="comment">% Generate independent data sources</span>
+X1 = randn(2,N);
+X2 = randn(2,N);
+
+<span class="comment">% Options for CCA algorithm</span>
+options.maxIter = 512;
+options.tol = 10^(-5);
+
+<span class="comment">% Variational Bayesian CCA</span>
+cca = vbcca (X1,X2,1,1,options);    <span class="comment">% One latent variable</span>
+
+<span class="comment">% Display estimated factor matrices and means for both data sources</span>
+disp(<span class="string">'Data source 1:'</span>);
+disp(<span class="string">'Estimated W'</span>);
+disp([cca.W1{1}]);
+disp(<span class="string">'Estimated mean'</span>);
+disp([cca.mu1{1}]);
+disp(<span class="string">'Data source 2:'</span>);
+disp(<span class="string">'Estimated W'</span>);
+disp([cca.W2{1}]);
+disp(<span class="string">'Estimated mean'</span>);
+disp([cca.mu2{1}]);
+
+<span class="comment">% Plot model evidence over iterations</span>
+figure
+plot(cca.Fhist);
+ylabel(<span class="string">'Model Evidence'</span>);
+xlabel(<span class="string">'Number of iterations'</span>);
+grid <span class="string">on</span>
+
+<span class="comment">% VB CCA  with null model (no latent variable)</span>
+options.null = 1;
+cca_null = vbcca (X1,X2,1,1,options);
+
+<span class="comment">% Calculate log Bayes Factor comparing model and null</span>
+logBF_alt = cca.F - cca_null.F
+</pre>
+<pre class="codeoutput">Replicate 1, 1 iterations, total sum of distances = 1996.43.
+Best total sum of distances = 1996.43
+Iteration3, Lower bound:-2902.0721
+Iteration4, Lower bound:-2902.0545
+Relative change smaller than the tolerance after4 iterations.
+Data source 1:
+Estimated W
+   -0.2511
+   -0.1448
+
+Estimated mean
+   -0.1215
+   -0.0077
+
+Data source 2:
+Estimated W
+   -0.1016
+   -0.2751
+
+Estimated mean
+   -0.0080
+   -0.0012
+
+Replicate 1, 1 iterations, total sum of distances = 1996.43.
+Best total sum of distances = 1996.43
+Iteration3, Lower bound:-2892.6394
+Iteration4, Lower bound:-2892.6306
+Relative change smaller than the tolerance after4 iterations.
+
+logBF_alt =
+
+   -9.4239
+
+</pre>
+<img vspace="5" hspace="5" src="demo_cca_2D_ind_complete_01.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script uses Bayesian CCA to estimate the factor matrices of two
+% independent 2D data sources
+
+% Data points
+N = 500;
+
+% Generate independent data sources
+X1 = randn(2,N);
+X2 = randn(2,N);
+
+% Options for CCA algorithm
+options.maxIter = 512;
+options.tol = 10^(-5);
+
+% Variational Bayesian CCA
+cca = vbcca (X1,X2,1,1,options);    % One latent variable
+
+% Display estimated factor matrices and means for both data sources
+disp('Data source 1:');
+disp('Estimated W');
+disp([cca.W1{1}]);
+disp('Estimated mean');
+disp([cca.mu1{1}]);
+disp('Data source 2:');
+disp('Estimated W');
+disp([cca.W2{1}]);
+disp('Estimated mean');
+disp([cca.mu2{1}]);
+
+% Plot model evidence over iterations
+figure
+plot(cca.Fhist);
+ylabel('Model Evidence');
+xlabel('Number of iterations');
+grid on
+
+% VB CCA  with null model (no latent variable)
+options.null = 1;
+cca_null = vbcca (X1,X2,1,1,options);
+
+% Calculate log Bayes Factor comparing model and null
+logBF_alt = cca.F - cca_null.F
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>

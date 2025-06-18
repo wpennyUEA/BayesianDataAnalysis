@@ -1,0 +1,304 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_cca_2D_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_cca_2D_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script estimates factor matrices using Bayesian CCA and compares</span>
+<span class="comment">% them to the maximum likelihood estimates from probabilistic CCA</span>
+
+<span class="comment">% Data points</span>
+N = 500;
+<span class="comment">% Generate latent variable</span>
+z = randn(1,N);
+<span class="comment">% Define factor matrices</span>
+W1 = [5 -3]';
+W2 = [1 2]';
+
+<span class="comment">% Mean vectors</span>
+mu1 = [1 1]';
+mu2 = [3 3]';
+
+<span class="comment">% Observation noise SD</span>
+sigma = 0.1;
+
+<span class="comment">% Generate data sources</span>
+X1 = W1*z + mu1*ones(1,N) + 0.01*sigma*randn(2,N);
+X2 = W2*z + mu2*ones(1,N) + sigma*randn(2,N);
+
+<span class="comment">% Call vbCCA algorithm</span>
+options.maxIter = 512;
+options.tol = 10^(-5);
+
+<span class="comment">% Variational Bayesian CCA</span>
+cca = vbcca (X1,X2,1,1,options);
+
+<span class="comment">% Call CCA algorithm with null model option (no latent variable)</span>
+options.null = 1;
+cca_null = vbcca (X1,X2,1,1,options);
+
+<span class="comment">% Call probCCA algorithm (maximum likelihood estimation)</span>
+cca_prob = probCCA (X1,X2,1);
+
+<span class="comment">% True and estimated factor matrices and means for both data sources</span>
+disp(<span class="string">'Data source 1:'</span>);
+disp(<span class="string">'True W      VB-W    ML-W'</span>);
+disp([W1,cca.W1{1},cca_prob.W1{1}]);
+disp(<span class="string">'True mean    VB-mean    ML-mean'</span>);
+disp([mu1,cca.mu1{1},cca_prob.mu1{1}]);
+disp(<span class="string">'Data source 2:'</span>);
+disp(<span class="string">'True W       VB-W     ML-W'</span>);
+disp([W2,cca.W2{1},cca_prob.W2{1}]);
+disp(<span class="string">'True mean    VB-mean    ML-mean'</span>);
+disp([mu2,cca.mu2{1},cca_prob.mu2{1}]);
+
+<span class="comment">% Observation noise covariance matrices</span>
+disp(<span class="string">'Obs noise covariance for data source 1:'</span>)
+disp(<span class="string">'True:'</span>)
+disp(sigma^2*eye(2))
+disp(<span class="string">'VB:'</span>)
+disp(cca.C1{1})
+disp(<span class="string">'ML:'</span>)
+disp(cca_prob.C1{1})
+
+<span class="comment">% Plot model evidence convergence</span>
+figure
+plot(cca.Fhist);
+ylabel(<span class="string">'Model Evidence'</span>);
+xlabel(<span class="string">'Number of iterations'</span>);
+grid <span class="string">on</span>
+
+<span class="comment">% Calculate Log Bayes Factor comparing model vs null</span>
+logBF_alt = cca.F - cca_null.F
+
+<span class="comment">% Bar chart of decomposition of free energy terms</span>
+figure
+bar(cca.Fdecomp.term);
+set(gca,<span class="string">'XTickLabel'</span>,cca.Fdecomp.name);
+grid <span class="string">on</span>
+ylabel(<span class="string">'Energies'</span>)
+Ne = length(cca.Fdecomp.term);
+hold <span class="string">on</span>
+plot([0 Ne],cca.F*ones(1,2),<span class="string">'r-'</span>);
+</pre>
+<pre class="codeoutput">Replicate 1, 1 iterations, total sum of distances = 19548.1.
+Best total sum of distances = 19548.1
+Iteration15, Lower bound:1197.13
+Iteration16, Lower bound:1197.137
+Relative change smaller than the tolerance after16 iterations.
+Replicate 1, 1 iterations, total sum of distances = 19548.1.
+Best total sum of distances = 19548.1
+Iteration64, Lower bound:-869.3257
+Iteration128, Lower bound:-848.2593
+Iteration192, Lower bound:-832.5672
+Iteration256, Lower bound:-817.5755
+Iteration320, Lower bound:-804.177
+Iteration384, Lower bound:-791.4093
+Iteration448, Lower bound:-779.0027
+Iteration512, Lower bound:-766.9332
+Data source 1:
+True W      VB-W    ML-W
+    5.0000    5.3916    5.0050
+   -3.0000   -3.2349   -3.0030
+
+True mean    VB-mean    ML-mean
+    1.0000    0.8992    0.9174
+    1.0000    1.0604    1.0495
+
+Data source 2:
+True W       VB-W     ML-W
+    1.0000    1.0852    1.0075
+    2.0000    2.1655    2.0105
+
+True mean    VB-mean    ML-mean
+    3.0000    2.9828    2.9865
+    3.0000    2.9535    2.9609
+
+Obs noise covariance for data source 1:
+True:
+    0.0100         0
+         0    0.0100
+
+VB:
+    0.0251   -0.0150
+   -0.0150    0.0090
+
+ML:
+    0.0257   -0.0154
+   -0.0154    0.0092
+
+
+logBF_alt =
+
+   1.9641e+03
+
+</pre>
+<img vspace="5" hspace="5" src="demo_cca_2D_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_cca_2D_complete_02.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script estimates factor matrices using Bayesian CCA and compares
+% them to the maximum likelihood estimates from probabilistic CCA
+
+% Data points
+N = 500;
+% Generate latent variable
+z = randn(1,N);
+% Define factor matrices
+W1 = [5 -3]';
+W2 = [1 2]';
+
+% Mean vectors
+mu1 = [1 1]';
+mu2 = [3 3]';
+
+% Observation noise SD
+sigma = 0.1;
+
+% Generate data sources
+X1 = W1*z + mu1*ones(1,N) + 0.01*sigma*randn(2,N);
+X2 = W2*z + mu2*ones(1,N) + sigma*randn(2,N);
+
+% Call vbCCA algorithm
+options.maxIter = 512;
+options.tol = 10^(-5);
+
+% Variational Bayesian CCA
+cca = vbcca (X1,X2,1,1,options);
+
+% Call CCA algorithm with null model option (no latent variable)
+options.null = 1;
+cca_null = vbcca (X1,X2,1,1,options);
+
+% Call probCCA algorithm (maximum likelihood estimation)
+cca_prob = probCCA (X1,X2,1);
+
+% True and estimated factor matrices and means for both data sources
+disp('Data source 1:');
+disp('True W      VB-W    ML-W');
+disp([W1,cca.W1{1},cca_prob.W1{1}]);
+disp('True mean    VB-mean    ML-mean');
+disp([mu1,cca.mu1{1},cca_prob.mu1{1}]);
+disp('Data source 2:');
+disp('True W       VB-W     ML-W');
+disp([W2,cca.W2{1},cca_prob.W2{1}]);
+disp('True mean    VB-mean    ML-mean');
+disp([mu2,cca.mu2{1},cca_prob.mu2{1}]);
+
+% Observation noise covariance matrices
+disp('Obs noise covariance for data source 1:')
+disp('True:')
+disp(sigma^2*eye(2))
+disp('VB:')
+disp(cca.C1{1})
+disp('ML:')
+disp(cca_prob.C1{1})
+
+% Plot model evidence convergence 
+figure
+plot(cca.Fhist);
+ylabel('Model Evidence');
+xlabel('Number of iterations');
+grid on
+
+% Calculate Log Bayes Factor comparing model vs null
+logBF_alt = cca.F - cca_null.F
+
+% Bar chart of decomposition of free energy terms
+figure
+bar(cca.Fdecomp.term);
+set(gca,'XTickLabel',cca.Fdecomp.name);
+grid on
+ylabel('Energies')
+Ne = length(cca.Fdecomp.term);
+hold on
+plot([0 Ne],cca.F*ones(1,2),'r-');
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
