@@ -1,0 +1,407 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_mcca_order_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_mcca_order_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script uses MCCA models with different numbers of clusters to estimate factor matrices from two data sources</span>
+<span class="comment">% with a shared latent variable</span>
+
+<span class="comment">% Data points</span>
+N = 100;
+
+<span class="comment">% Generate latent variable</span>
+z = randn(1,N);
+
+<span class="comment">% Define factor matrices for first two clusters</span>
+W1{1} = [0.5 -0.3]'; <span class="comment">% for first</span>
+W2{1} = [1 2]';
+W1{2} = [-0.3 0.5]'; <span class="comment">% and second cluster</span>
+W2{2} = [2 1]';
+<span class="comment">% Means</span>
+mu1{1} = [-3 3]'; <span class="comment">% for first</span>
+mu2{1} = [3 -3]';
+mu1{2} = [2 -2]'; <span class="comment">% and second cluster</span>
+mu2{2} = [2 2]';
+
+<span class="comment">% Observation noise SD</span>
+sigma = 0.2;
+
+<span class="comment">% Generate data sources - mixing latent variable, cluster factors, means and noise</span>
+X1 = []; X2 = [];
+<span class="keyword">for</span> m = 1:2,
+    X1new = W1{m}*z + mu1{m}*ones(1,N) + sigma*randn(2,N);
+    X2new = W2{m}*z + mu2{m}*ones(1,N) + sigma*randn(2,N);
+    X1 = [X1, X1new];
+    X2 = [X2, X2new];
+<span class="keyword">end</span>
+
+<span class="comment">% Evaluate model evidence for different number of clusters (1-5)</span>
+<span class="keyword">for</span> m = 1:5,
+    cca = vbcca (X1,X2,1,m);
+    F(m) = cca.F;   <span class="comment">% Store model evidence</span>
+<span class="keyword">end</span>
+
+<span class="comment">% PLot model evidence vs number of clusters</span>
+figure
+plot(F);
+xlabel(<span class="string">'Number of Clusters'</span>);
+ylabel(<span class="string">'Model Evidence'</span>);
+grid <span class="string">on</span>
+title(<span class="string">'True number of clusters = 2'</span>);
+</pre>
+<pre class="codeoutput">Replicate 1, 1 iterations, total sum of distances = 4627.68.
+Best total sum of distances = 4627.68
+Iteration10, Lower bound:-1114.1102
+Iteration11, Lower bound:-1114.0182
+Relative change smaller than the tolerance after11 iterations.
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 3 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 4 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 3 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 3 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 3 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 5 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 1 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 3 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Replicate 1, 2 iterations, total sum of distances = 903.632.
+Best total sum of distances = 903.632
+Iteration27, Lower bound:-574.7093
+Iteration28, Lower bound:-574.6526
+Relative change smaller than the tolerance after28 iterations.
+Replicate 1, 6 iterations, total sum of distances = 633.74.
+Best total sum of distances = 633.74
+Replicate 1, 3 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 5 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 2 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 7 iterations, total sum of distances = 636.635.
+Best total sum of distances = 636.635
+Replicate 1, 8 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 3 iterations, total sum of distances = 636.983.
+Best total sum of distances = 636.983
+Replicate 1, 6 iterations, total sum of distances = 638.751.
+Best total sum of distances = 638.751
+Replicate 1, 5 iterations, total sum of distances = 633.74.
+Best total sum of distances = 633.74
+Replicate 1, 7 iterations, total sum of distances = 638.751.
+Best total sum of distances = 638.751
+Replicate 1, 7 iterations, total sum of distances = 636.635.
+Best total sum of distances = 636.635
+Replicate 1, 5 iterations, total sum of distances = 638.751.
+Best total sum of distances = 638.751
+Replicate 1, 6 iterations, total sum of distances = 638.751.
+Best total sum of distances = 638.751
+Replicate 1, 10 iterations, total sum of distances = 636.635.
+Best total sum of distances = 636.635
+Replicate 1, 2 iterations, total sum of distances = 636.635.
+Best total sum of distances = 636.635
+Replicate 1, 6 iterations, total sum of distances = 638.751.
+Best total sum of distances = 638.751
+Replicate 1, 4 iterations, total sum of distances = 633.74.
+Best total sum of distances = 633.74
+Replicate 1, 7 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 6 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 7 iterations, total sum of distances = 636.635.
+Best total sum of distances = 636.635
+Replicate 1, 7 iterations, total sum of distances = 638.751.
+Best total sum of distances = 638.751
+Replicate 1, 6 iterations, total sum of distances = 633.74.
+Best total sum of distances = 633.74
+Replicate 1, 4 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Replicate 1, 2 iterations, total sum of distances = 634.399.
+Best total sum of distances = 634.399
+Replicate 1, 7 iterations, total sum of distances = 637.163.
+Best total sum of distances = 637.163
+Iteration33, Lower bound:-627.1574
+Iteration34, Lower bound:-627.0962
+Relative change smaller than the tolerance after34 iterations.
+Replicate 1, 11 iterations, total sum of distances = 530.759.
+Best total sum of distances = 530.759
+Replicate 1, 4 iterations, total sum of distances = 368.372.
+Best total sum of distances = 368.372
+Replicate 1, 3 iterations, total sum of distances = 369.319.
+Best total sum of distances = 369.319
+Replicate 1, 8 iterations, total sum of distances = 536.81.
+Best total sum of distances = 536.81
+Replicate 1, 9 iterations, total sum of distances = 369.479.
+Best total sum of distances = 369.479
+Replicate 1, 9 iterations, total sum of distances = 370.166.
+Best total sum of distances = 370.166
+Replicate 1, 5 iterations, total sum of distances = 372.283.
+Best total sum of distances = 372.283
+Replicate 1, 10 iterations, total sum of distances = 370.166.
+Best total sum of distances = 370.166
+Replicate 1, 6 iterations, total sum of distances = 371.595.
+Best total sum of distances = 371.595
+Replicate 1, 5 iterations, total sum of distances = 530.759.
+Best total sum of distances = 530.759
+Replicate 1, 3 iterations, total sum of distances = 537.162.
+Best total sum of distances = 537.162
+Replicate 1, 3 iterations, total sum of distances = 530.759.
+Best total sum of distances = 530.759
+Replicate 1, 6 iterations, total sum of distances = 369.85.
+Best total sum of distances = 369.85
+Replicate 1, 7 iterations, total sum of distances = 372.283.
+Best total sum of distances = 372.283
+Replicate 1, 5 iterations, total sum of distances = 372.283.
+Best total sum of distances = 372.283
+Replicate 1, 10 iterations, total sum of distances = 369.479.
+Best total sum of distances = 369.479
+Replicate 1, 10 iterations, total sum of distances = 530.759.
+Best total sum of distances = 530.759
+Replicate 1, 4 iterations, total sum of distances = 536.81.
+Best total sum of distances = 536.81
+Replicate 1, 3 iterations, total sum of distances = 536.872.
+Best total sum of distances = 536.872
+Replicate 1, 2 iterations, total sum of distances = 536.902.
+Best total sum of distances = 536.902
+Replicate 1, 6 iterations, total sum of distances = 372.283.
+Best total sum of distances = 372.283
+Replicate 1, 7 iterations, total sum of distances = 372.283.
+Best total sum of distances = 372.283
+Replicate 1, 7 iterations, total sum of distances = 537.162.
+Best total sum of distances = 537.162
+Replicate 1, 12 iterations, total sum of distances = 530.759.
+Best total sum of distances = 530.759
+Replicate 1, 6 iterations, total sum of distances = 367.733.
+Best total sum of distances = 367.733
+Iteration35, Lower bound:-667.2656
+Iteration36, Lower bound:-667.2018
+Relative change smaller than the tolerance after36 iterations.
+Replicate 1, 6 iterations, total sum of distances = 268.551.
+Best total sum of distances = 268.551
+Replicate 1, 10 iterations, total sum of distances = 269.672.
+Best total sum of distances = 269.672
+Replicate 1, 14 iterations, total sum of distances = 269.672.
+Best total sum of distances = 269.672
+Replicate 1, 3 iterations, total sum of distances = 269.362.
+Best total sum of distances = 269.362
+Replicate 1, 8 iterations, total sum of distances = 269.672.
+Best total sum of distances = 269.672
+Replicate 1, 7 iterations, total sum of distances = 270.342.
+Best total sum of distances = 270.342
+Replicate 1, 6 iterations, total sum of distances = 268.387.
+Best total sum of distances = 268.387
+Replicate 1, 4 iterations, total sum of distances = 269.362.
+Best total sum of distances = 269.362
+Replicate 1, 5 iterations, total sum of distances = 509.337.
+Best total sum of distances = 509.337
+Replicate 1, 5 iterations, total sum of distances = 270.006.
+Best total sum of distances = 270.006
+Replicate 1, 14 iterations, total sum of distances = 269.672.
+Best total sum of distances = 269.672
+Replicate 1, 11 iterations, total sum of distances = 270.693.
+Best total sum of distances = 270.693
+Replicate 1, 10 iterations, total sum of distances = 271.789.
+Best total sum of distances = 271.789
+Replicate 1, 6 iterations, total sum of distances = 269.362.
+Best total sum of distances = 269.362
+Replicate 1, 4 iterations, total sum of distances = 269.716.
+Best total sum of distances = 269.716
+Replicate 1, 11 iterations, total sum of distances = 268.551.
+Best total sum of distances = 268.551
+Replicate 1, 10 iterations, total sum of distances = 268.26.
+Best total sum of distances = 268.26
+Replicate 1, 8 iterations, total sum of distances = 271.478.
+Best total sum of distances = 271.478
+Replicate 1, 4 iterations, total sum of distances = 269.655.
+Best total sum of distances = 269.655
+Replicate 1, 5 iterations, total sum of distances = 270.342.
+Best total sum of distances = 270.342
+Replicate 1, 11 iterations, total sum of distances = 269.672.
+Best total sum of distances = 269.672
+Replicate 1, 6 iterations, total sum of distances = 270.006.
+Best total sum of distances = 270.006
+Replicate 1, 10 iterations, total sum of distances = 269.362.
+Best total sum of distances = 269.362
+Replicate 1, 9 iterations, total sum of distances = 269.362.
+Best total sum of distances = 269.362
+Replicate 1, 8 iterations, total sum of distances = 271.478.
+Best total sum of distances = 271.478
+Iteration64, Lower bound:-729.8837
+Iteration128, Lower bound:-715.7472
+</pre>
+<img vspace="5" hspace="5" src="demo_mcca_order_complete_01.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script uses MCCA models with different numbers of clusters to estimate factor matrices from two data sources
+% with a shared latent variable
+
+% Data points
+N = 100;
+
+% Generate latent variable
+z = randn(1,N);
+
+% Define factor matrices for first two clusters
+W1{1} = [0.5 -0.3]'; % for first
+W2{1} = [1 2]';
+W1{2} = [-0.3 0.5]'; % and second cluster
+W2{2} = [2 1]';
+% Means 
+mu1{1} = [-3 3]'; % for first  
+mu2{1} = [3 -3]';
+mu1{2} = [2 -2]'; % and second cluster
+mu2{2} = [2 2]';
+
+% Observation noise SD
+sigma = 0.2;
+
+% Generate data sources - mixing latent variable, cluster factors, means and noise
+X1 = []; X2 = [];
+for m = 1:2,
+    X1new = W1{m}*z + mu1{m}*ones(1,N) + sigma*randn(2,N);
+    X2new = W2{m}*z + mu2{m}*ones(1,N) + sigma*randn(2,N);
+    X1 = [X1, X1new];
+    X2 = [X2, X2new];
+end
+
+% Evaluate model evidence for different number of clusters (1-5)
+for m = 1:5,
+    cca = vbcca (X1,X2,1,m);
+    F(m) = cca.F;   % Store model evidence
+end
+
+% PLot model evidence vs number of clusters
+figure
+plot(F);
+xlabel('Number of Clusters');
+ylabel('Model Evidence');
+grid on
+title('True number of clusters = 2');
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
