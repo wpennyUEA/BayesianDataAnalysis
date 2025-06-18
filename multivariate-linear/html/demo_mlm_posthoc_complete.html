@@ -1,0 +1,289 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_mlm_posthoc_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-18">
+<meta name="DC.source" content="demo_mlm_posthoc_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script demonstrates posthoc model comparison for spm_mlm_bayes.</span>
+
+<span class="comment">% Set dimensions</span>
+N=100;
+d=10;
+p=5;
+
+<span class="comment">% Generate design matrix</span>
+x=randn(N,p);
+<span class="comment">% Generate true regression coefficients. In this example only inputs 1,2 and 3 are predictive of outputs</span>
+W=randn(p,d);
+W(4:5,:)=0;
+<span class="comment">% Generate noise</span>
+e=2*randn(N,d);
+
+<span class="comment">% Generate observed data (linear model + noise)</span>
+y=x*W+e;
+
+<span class="comment">% Setup options for spm_mlm_bayes</span>
+options.pr = <span class="string">'input'</span>;   <span class="comment">% Input prior shrinks connections from irrelevant inputs to zero</span>
+options.verbose = 1;
+
+<span class="comment">% Run Bayesian MLM estimation</span>
+evalc(<span class="string">'mlm = spm_mlm_bayes (y,x,options);'</span>);
+
+<span class="comment">% Display Bayesian regression coefficients (posterior means)</span>
+figure
+imagesc(mlm.wmean);
+colormap <span class="string">gray</span>
+colorbar
+ylabel(<span class="string">'Inputs'</span>);
+xlabel(<span class="string">'Outputs'</span>);
+title(<span class="string">'Bayes Regression Coefficients'</span>);
+
+<span class="comment">% Display Maximum Likelihood regression coefficents for comparison</span>
+figure
+imagesc(mlm.wml);
+colorbar
+ylabel(<span class="string">'Inputs'</span>);
+xlabel(<span class="string">'Outputs'</span>);
+colormap(gray);
+title(<span class="string">'ML Regression Coefficients'</span>);
+
+<span class="comment">% Post-hoc inference based on Savage-Dickey tests</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'Posthoc questions:'</span>);
+disp(<span class="string">' '</span>);
+
+disp(<span class="string">'Is regression coefficient 1,1 non zero ?'</span>);
+con=zeros(p,d);
+con(1,1)=1; <span class="comment">% Define contrast vector selecting coefficient (1,1)</span>
+con_vec=con(:)';
+disp(<span class="string">'Log Evidence in favour of this hypothesis:'</span>);
+logbf = spm_mlm_posthoc (mlm,con_vec)
+
+disp(<span class="string">'Is regression coefficient 4,6 non zero ?'</span>);
+con=zeros(p,d);
+con(4,6)=1;
+con_vec=con(:)';
+disp(<span class="string">'Log Evidence in favour of this hypothesis:'</span>);
+logbf = spm_mlm_posthoc (mlm,con_vec)
+
+disp(<span class="string">'Are regression coefficients 1,1 2,1 and 3,1 non zero ?'</span>);
+w=zeros(p,d);
+w(1,1)=1;w(2,1)=1;w(3,1)=1;
+con_vec1 = spm_mlm_makecon (mlm,w);
+disp(<span class="string">'Log Evidence in favour of this hypothesis:'</span>);
+logbf = spm_mlm_posthoc (mlm,con_vec1)
+
+disp(<span class="string">'If we define w1 = regression coefficients 1,1 2,1 and 3,1'</span>);
+disp(<span class="string">'and w2 = regression coefficients 1,2 2,2 and 3,2'</span>);
+disp(<span class="string">'Is w1 different to w2 ?'</span>);
+w=zeros(p,d);
+w(1,2)=1;w(2,2)=1;w(3,2)=1;
+con_vec2 = spm_mlm_makecon (mlm,w);
+con_vec_diff=con_vec2-con_vec1; <span class="comment">% Contrast difference between w2 and w1</span>
+disp(<span class="string">'Log Evidence in favour of this hypothesis:'</span>);
+logbf = spm_mlm_posthoc (mlm,con_vec_diff)
+</pre>
+<pre class="codeoutput"> 
+Posthoc questions:
+ 
+Is regression coefficient 1,1 non zero ?
+Log Evidence in favour of this hypothesis:
+
+logbf =
+
+    0.3952
+
+Is regression coefficient 4,6 non zero ?
+Log Evidence in favour of this hypothesis:
+
+logbf =
+
+    0.2533
+
+Are regression coefficients 1,1 2,1 and 3,1 non zero ?
+Log Evidence in favour of this hypothesis:
+
+logbf =
+
+    6.3078
+
+If we define w1 = regression coefficients 1,1 2,1 and 3,1
+and w2 = regression coefficients 1,2 2,2 and 3,2
+Is w1 different to w2 ?
+Log Evidence in favour of this hypothesis:
+
+logbf =
+
+   18.7848
+
+</pre>
+<img vspace="5" hspace="5" src="demo_mlm_posthoc_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_mlm_posthoc_complete_02.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script demonstrates posthoc model comparison for spm_mlm_bayes.
+
+% Set dimensions
+N=100;
+d=10;
+p=5;
+
+% Generate design matrix 
+x=randn(N,p);
+% Generate true regression coefficients. In this example only inputs 1,2 and 3 are predictive of outputs
+W=randn(p,d);
+W(4:5,:)=0;
+% Generate noise
+e=2*randn(N,d);
+
+% Generate observed data (linear model + noise)
+y=x*W+e;
+
+% Setup options for spm_mlm_bayes
+options.pr = 'input';   % Input prior shrinks connections from irrelevant inputs to zero
+options.verbose = 1;
+
+% Run Bayesian MLM estimation
+evalc('mlm = spm_mlm_bayes (y,x,options);');
+
+% Display Bayesian regression coefficients (posterior means)
+figure
+imagesc(mlm.wmean);
+colormap gray
+colorbar
+ylabel('Inputs');
+xlabel('Outputs');
+title('Bayes Regression Coefficients');
+
+% Display Maximum Likelihood regression coefficents for comparison
+figure
+imagesc(mlm.wml);
+colorbar
+ylabel('Inputs');
+xlabel('Outputs');
+colormap(gray);
+title('ML Regression Coefficients');
+
+% Post-hoc inference based on Savage-Dickey tests
+disp(' ');
+disp('Posthoc questions:');
+disp(' ');
+
+disp('Is regression coefficient 1,1 non zero ?');
+con=zeros(p,d);
+con(1,1)=1; % Define contrast vector selecting coefficient (1,1)
+con_vec=con(:)';
+disp('Log Evidence in favour of this hypothesis:');
+logbf = spm_mlm_posthoc (mlm,con_vec)
+
+disp('Is regression coefficient 4,6 non zero ?');
+con=zeros(p,d);
+con(4,6)=1;
+con_vec=con(:)';
+disp('Log Evidence in favour of this hypothesis:');
+logbf = spm_mlm_posthoc (mlm,con_vec)
+
+disp('Are regression coefficients 1,1 2,1 and 3,1 non zero ?');
+w=zeros(p,d);
+w(1,1)=1;w(2,1)=1;w(3,1)=1;
+con_vec1 = spm_mlm_makecon (mlm,w);
+disp('Log Evidence in favour of this hypothesis:');
+logbf = spm_mlm_posthoc (mlm,con_vec1)
+
+disp('If we define w1 = regression coefficients 1,1 2,1 and 3,1');
+disp('and w2 = regression coefficients 1,2 2,2 and 3,2');
+disp('Is w1 different to w2 ?');
+w=zeros(p,d);
+w(1,2)=1;w(2,2)=1;w(3,2)=1;
+con_vec2 = spm_mlm_makecon (mlm,w);
+con_vec_diff=con_vec2-con_vec1; % Contrast difference between w2 and w1
+disp('Log Evidence in favour of this hypothesis:');
+logbf = spm_mlm_posthoc (mlm,con_vec_diff)
+
+##### SOURCE END #####
+-->
+</body>
+</html>
