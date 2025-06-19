@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_gew_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-19">
+<meta name="DC.source" content="demo_gew_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="comment">% See Brovelli et al. (2004) PNAS 101(26), 9849-9854</span>
+<span class="comment">% and Geweke (1982) JASA 77 (378), 304-313.</span>
+<span class="comment">% Note: GEW and PVE to be applied to bivariate data only</span>
+
+close <span class="string">all</span>
+
+<span class="comment">% This script uses a MAR model to estimate the Granger causality in the</span>
+<span class="comment">% frequency domain between two signals</span>
+
+<span class="comment">% Noise</span>
+noise_dev1=0.1;
+noise_dev2=0.01;
+
+<span class="comment">% Parameters</span>
+secs=1; <span class="comment">% Total duration</span>
+ns=1000;    <span class="comment">% Sample number</span>
+t=[1/ns:1/ns:secs]';
+N=length(t);    <span class="comment">% Time points</span>
+d=2;    <span class="comment">% Signal number</span>
+
+<span class="comment">% Generate shared oscillatory signal</span>
+f1=10;
+y=0.5*sin(2*pi*f1.*t)+sin(2*pi*15*t);
+y=y/std(y); <span class="comment">% Normalise to unit variance</span>
+
+<span class="comment">% Delay</span>
+delay=50; <span class="comment">% Milliseconds</span>
+delay_in_samples=ns*delay/1000;
+
+<span class="comment">% Signal 1 is a noisy copy of y</span>
+y1=y+noise_dev1*randn(N,1);
+
+<span class="comment">% Signal 2 is a delayed version of y1</span>
+y2=[y1(delay_in_samples:end);zeros(delay_in_samples-1,1)];
+y2=y2+noise_dev2*randn(N,1);
+
+y=[y1,y2];  <span class="comment">% Combine</span>
+disp(sprintf(<span class="string">'Signal 2 leads signal 1 by %1.2f ms'</span>,delay));
+
+<span class="comment">% Plot signals</span>
+h=figure;
+set(h,<span class="string">'name'</span>,<span class="string">'Data'</span>);
+subplot(2,1,1);
+plot(t,y1);
+title(<span class="string">'Signal 1'</span>);
+subplot(2,1,2);
+plot(t,y2);
+title(<span class="string">'Signal 2'</span>);
+xlabel(<span class="string">'Seconds'</span>);
+
+<span class="comment">% MAR model</span>
+p=10; <span class="comment">% Model order</span>
+freqs=[0.5:0.5:32]; <span class="comment">% Freq range to evaluate</span>
+mar = spm_mar(y,p);
+mar = spm_mar_spectra (mar,freqs,ns);   <span class="comment">% Calculate spectra + Granger measures</span>
+
+<span class="comment">% Plot Granger Causality (GEW)</span>
+h=figure;
+set(h,<span class="string">'name'</span>,<span class="string">'Granger Causality'</span>);
+<span class="keyword">for</span> k=1:d,
+    <span class="keyword">for</span> j=1:d,
+        <span class="keyword">if</span> ~(k==j)
+            index=(k-1)*d+j;
+            subplot(d,d,index);
+            plot(mar.f,mar.gew(:,k,j));
+            title(sprintf(<span class="string">'From %d to %d'</span>,j,k));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Plot Proportion of Variance Explained (PVE)</span>
+h=figure;
+set(h,<span class="string">'name'</span>,<span class="string">'Proportion of Variance Explained'</span>);
+<span class="keyword">for</span> k=1:d,
+    <span class="keyword">for</span> j=1:d,
+        <span class="keyword">if</span> ~(k==j)
+            index=(k-1)*d+j;
+            subplot(d,d,index);
+            plot(mar.f,mar.pve(:,k,j));
+            title(sprintf(<span class="string">'From %d to %d'</span>,j,k));
+            axis([min(mar.f) max(mar.f) 0 1]);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<pre class="codeoutput">Signal 2 leads signal 1 by 50.00 ms
+</pre>
+<img vspace="5" hspace="5" src="demo_gew_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_gew_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_gew_complete_03.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+% See Brovelli et al. (2004) PNAS 101(26), 9849-9854
+% and Geweke (1982) JASA 77 (378), 304-313.
+% Note: GEW and PVE to be applied to bivariate data only
+
+close all
+
+% This script uses a MAR model to estimate the Granger causality in the
+% frequency domain between two signals
+
+% Noise
+noise_dev1=0.1;
+noise_dev2=0.01;
+
+% Parameters
+secs=1; % Total duration
+ns=1000;    % Sample number 
+t=[1/ns:1/ns:secs]';
+N=length(t);    % Time points
+d=2;    % Signal number
+
+% Generate shared oscillatory signal
+f1=10;
+y=0.5*sin(2*pi*f1.*t)+sin(2*pi*15*t);
+y=y/std(y); % Normalise to unit variance
+
+% Delay
+delay=50; % Milliseconds
+delay_in_samples=ns*delay/1000;
+
+% Signal 1 is a noisy copy of y
+y1=y+noise_dev1*randn(N,1);
+
+% Signal 2 is a delayed version of y1
+y2=[y1(delay_in_samples:end);zeros(delay_in_samples-1,1)];
+y2=y2+noise_dev2*randn(N,1);
+
+y=[y1,y2];  % Combine
+disp(sprintf('Signal 2 leads signal 1 by %1.2f ms',delay));
+
+% Plot signals
+h=figure;
+set(h,'name','Data');
+subplot(2,1,1);
+plot(t,y1);
+title('Signal 1');
+subplot(2,1,2);
+plot(t,y2);
+title('Signal 2');
+xlabel('Seconds');
+
+% MAR model
+p=10; % Model order
+freqs=[0.5:0.5:32]; % Freq range to evaluate
+mar = spm_mar(y,p);
+mar = spm_mar_spectra (mar,freqs,ns);   % Calculate spectra + Granger measures
+
+% Plot Granger Causality (GEW)
+h=figure;
+set(h,'name','Granger Causality');
+for k=1:d,
+    for j=1:d,
+        if ~(k==j)
+            index=(k-1)*d+j;
+            subplot(d,d,index);
+            plot(mar.f,mar.gew(:,k,j));
+            title(sprintf('From %d to %d',j,k));
+        end
+    end
+end
+
+% Plot Proportion of Variance Explained (PVE)
+h=figure;
+set(h,'name','Proportion of Variance Explained');
+for k=1:d,
+    for j=1:d,
+        if ~(k==j)
+            index=(k-1)*d+j;
+            subplot(d,d,index);
+            plot(mar.f,mar.pve(:,k,j));
+            title(sprintf('From %d to %d',j,k));
+            axis([min(mar.f) max(mar.f) 0 1]);
+        end
+    end
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

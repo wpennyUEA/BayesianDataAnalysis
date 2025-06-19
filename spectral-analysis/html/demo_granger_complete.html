@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_granger_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-19">
+<meta name="DC.source" content="demo_granger_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="comment">% This script simulates six sinewaves in two blocks of 3. The signals are dependent within each block.</span>
+<span class="comment">% It demonstrates MAR modelling to estimate Granger causality between all</span>
+<span class="comment">% signal pairs</span>
+
+<span class="comment">% Parameters</span>
+secs=1; <span class="comment">% Signal duration</span>
+ns=250; <span class="comment">% Sampling frequency</span>
+t=[1/ns:1/ns:secs]';    <span class="comment">% Time vector</span>
+d=6;    <span class="comment">% Time series</span>
+f1=10;  <span class="comment">% Frewuency for first signal group</span>
+
+clear <span class="string">x</span>
+<span class="comment">% Noise</span>
+dev=1*ones(1,6);
+
+<span class="comment">% First block of 3 signals with sinusoid frequency f1 + noise</span>
+y=sin(2*pi*f1*t);
+y2=sin(2*pi*12.5*t);
+x(:,1)=y+dev(1)*randn(size(t));
+<span class="keyword">for</span> i=2:3,
+  x(:,i)=y+dev(i)*randn(size(t));
+<span class="keyword">end</span>
+
+<span class="comment">% Second block of 3 signals with sinusoid frequency 12.5Hz + noise</span>
+<span class="keyword">for</span> i=4:6,
+  x(:,i)=y2+dev(i)*randn(size(t));
+<span class="keyword">end</span>
+
+<span class="comment">% Normalise</span>
+<span class="keyword">for</span> i=1:6,
+    x(:,i)=x(:,i)/std(x(:,i));  <span class="comment">% Variance to 1</span>
+    x(:,i)=x(:,i)-mean(x(:,i)); <span class="comment">% Zero mean</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Fit MAR models</span>
+disp(<span class="string">'Estimating order of MAR model'</span>);
+logev=[];
+<span class="keyword">for</span> m=1:5,  <span class="comment">% Lags from 1 to 5</span>
+    disp(sprintf(<span class="string">'Fitting MAR model with %d components'</span>,m));
+    mar=spm_mar(x,m);
+    logev=[logev; mar.fm];  <span class="comment">% Store log evidence</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Normalise log evidence</span>
+logev=logev-min(logev);
+figure
+bar(logev);
+xlabel(<span class="string">'Number of time lags'</span>);
+ylabel(<span class="string">'Log Evidence'</span>);
+
+<span class="comment">% Model order with highest evidence</span>
+[tmp, p_sel]=max(logev);
+
+<span class="comment">% Fit final MAR model</span>
+disp(sprintf(<span class="string">'Using MAR(%d) model ..'</span>,p_sel));
+[mar,y,y_pred]=spm_mar(x,p_sel);
+
+<span class="comment">% Calculate Granger causality from fitted MAR model</span>
+[G,Psig] = spm_granger (mar);
+
+<span class="comment">% Known block structure</span>
+disp(<span class="string">' '</span>);
+disp(<span class="string">'True causality matrix'</span>);
+[ones(3,3),zeros(3,3);zeros(3,3),ones(3,3)]
+
+<span class="comment">% Convert significance matrix to belief matrix</span>
+disp(<span class="string">'Granger probability matrix:'</span>);
+Peffect=ones(6,6)-Psig;
+Peffect
+disp(<span class="string">'where ijth entry is our belief that time series i Granger causes j'</span>);
+
+<span class="comment">% Display Granger causality matrix</span>
+figure
+imagesc(Peffect);
+title(<span class="string">'Granger probability matrix'</span>);
+colormap <span class="string">gray</span>
+colorbar
+disp(<span class="string">' '</span>);
+disp(<span class="string">'Inferred Granger causality matrix:'</span>);
+disp(<span class="string">'This is Granger Prob matrix thresholded at 0.95'</span>);
+Peffect&gt;0.95<span class="comment">% Threshold for significant binary matrix</span>
+</pre>
+<pre class="codeoutput">Estimating order of MAR model
+Fitting MAR model with 1 components
+Fitting MAR model with 2 components
+Fitting MAR model with 3 components
+Fitting MAR model with 4 components
+Fitting MAR model with 5 components
+Using MAR(3) model ..
+ 
+True causality matrix
+
+ans =
+
+     1     1     1     0     0     0
+     1     1     1     0     0     0
+     1     1     1     0     0     0
+     0     0     0     1     1     1
+     0     0     0     1     1     1
+     0     0     0     1     1     1
+
+Granger probability matrix:
+
+Peffect =
+
+    1.0000    0.9246    0.7394    0.0910    0.0795    0.3613
+    0.9675    0.9256    0.9590    0.1400    0.8978    0.0881
+    0.9936    0.9339    0.9256    0.0421    0.1025    0.1821
+    0.5558    0.5160    0.4399    0.8862    0.9756    0.9998
+    0.3002    0.2700    0.8614    0.2911    0.9765    0.9983
+    0.4587    0.5789    0.0627    0.8089    0.9744    0.9655
+
+where ijth entry is our belief that time series i Granger causes j
+ 
+Inferred Granger causality matrix:
+This is Granger Prob matrix thresholded at 0.95
+
+ans =
+
+  6&times;6 logical array
+
+   1   0   0   0   0   0
+   1   0   1   0   0   0
+   1   0   0   0   0   0
+   0   0   0   0   1   1
+   0   0   0   0   1   1
+   0   0   0   0   1   1
+
+</pre>
+<img vspace="5" hspace="5" src="demo_granger_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_granger_complete_02.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+% This script simulates six sinewaves in two blocks of 3. The signals are dependent within each block.
+% It demonstrates MAR modelling to estimate Granger causality between all
+% signal pairs
+
+% Parameters
+secs=1; % Signal duration
+ns=250; % Sampling frequency    
+t=[1/ns:1/ns:secs]';    % Time vector
+d=6;    % Time series
+f1=10;  % Frewuency for first signal group
+
+clear x
+% Noise 
+dev=1*ones(1,6);
+
+% First block of 3 signals with sinusoid frequency f1 + noise
+y=sin(2*pi*f1*t);
+y2=sin(2*pi*12.5*t);
+x(:,1)=y+dev(1)*randn(size(t));
+for i=2:3,
+  x(:,i)=y+dev(i)*randn(size(t));
+end
+
+% Second block of 3 signals with sinusoid frequency 12.5Hz + noise
+for i=4:6,
+  x(:,i)=y2+dev(i)*randn(size(t));
+end
+
+% Normalise
+for i=1:6,
+    x(:,i)=x(:,i)/std(x(:,i));  % Variance to 1
+    x(:,i)=x(:,i)-mean(x(:,i)); % Zero mean
+end
+
+% Fit MAR models
+disp('Estimating order of MAR model');
+logev=[];
+for m=1:5,  % Lags from 1 to 5
+    disp(sprintf('Fitting MAR model with %d components',m));
+    mar=spm_mar(x,m);
+    logev=[logev; mar.fm];  % Store log evidence
+end
+
+% Normalise log evidence
+logev=logev-min(logev);
+figure
+bar(logev);
+xlabel('Number of time lags');
+ylabel('Log Evidence');
+
+% Model order with highest evidence
+[tmp, p_sel]=max(logev);
+
+% Fit final MAR model
+disp(sprintf('Using MAR(%d) model ..',p_sel));
+[mar,y,y_pred]=spm_mar(x,p_sel);
+
+% Calculate Granger causality from fitted MAR model
+[G,Psig] = spm_granger (mar);
+
+% Known block structure
+disp(' ');
+disp('True causality matrix');
+[ones(3,3),zeros(3,3);zeros(3,3),ones(3,3)]
+
+% Convert significance matrix to belief matrix
+disp('Granger probability matrix:');
+Peffect=ones(6,6)-Psig;
+Peffect
+disp('where ijth entry is our belief that time series i Granger causes j');
+
+% Display Granger causality matrix
+figure
+imagesc(Peffect);
+title('Granger probability matrix');
+colormap gray
+colorbar
+disp(' ');
+disp('Inferred Granger causality matrix:');
+disp('This is Granger Prob matrix thresholded at 0.95');
+Peffect>0.95% Threshold for significant binary matrix
+
+
+
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
