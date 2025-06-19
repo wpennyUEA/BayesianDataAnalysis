@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_mar_spectra_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-19">
+<meta name="DC.source" content="demo_mar_spectra_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">
+<span class="comment">% This simulation is similar to Cassidy and Brown. Spectral Phase</span>
+<span class="comment">% J Neurosci Methods. 2003 Aug 1-15;37(3):299.</span>
+
+close <span class="string">all</span>
+
+<span class="comment">% This demo simulates complex signals with many sinusoidal components and</span>
+<span class="comment">% estimates their spectral properties using MAR models in the setting of</span>
+<span class="comment">% multidirectional coupling</span>
+
+<span class="comment">% Noise SD</span>
+noise_dev=0.01;
+Nsines=100; <span class="comment">% Sinusoidal components</span>
+f=sqrt(0.2)*randn(Nsines,1)+20; <span class="comment">% Frequencies</span>
+secs=50;    <span class="comment">% Signal duration</span>
+ns=100; <span class="comment">% Sampling frequency</span>
+t=[1/ns:1/ns:secs]';    <span class="comment">% Time vector</span>
+N=length(t);    <span class="comment">% Sample number</span>
+
+<span class="comment">% Initialise signal</span>
+y=zeros(N,1);
+
+<span class="comment">% Sum sinusoids with random frequencies</span>
+<span class="keyword">for</span> n=1:Nsines,
+    y=y+sin(2*pi*f(n)*t);
+<span class="keyword">end</span>
+y=y/std(y); <span class="comment">% Normalise to unit variance</span>
+
+<span class="comment">% Delay</span>
+delay=50; <span class="comment">% Milliseconds</span>
+delay_in_samples=ns*delay/1000; <span class="comment">% Convert delay to number of samples</span>
+
+<span class="comment">% Create two signals</span>
+y1=y+noise_dev*randn(N,1);
+y2=[y1(delay_in_samples:end);zeros(delay_in_samples-1,1)]; <span class="comment">% y2 is delayed version of y1</span>
+y2=y2+noise_dev*randn(N,1); <span class="comment">% Add noise</span>
+
+<span class="comment">% Bivariate data matrix</span>
+y=[y1,y2];
+
+<span class="comment">% Plot both signals</span>
+h=figure;
+set(h,<span class="string">'name'</span>,<span class="string">'Data'</span>);
+plot(t,y1);
+hold <span class="string">on</span>
+plot(t,y2+3);   <span class="comment">% Shift y2 so no overlap</span>
+xlabel(<span class="string">'Seconds'</span>);
+
+<span class="comment">% Fit MAR model</span>
+p=10; <span class="comment">% Order</span>
+freqs=[0.5:0.5:32]; <span class="comment">% Frequencies</span>
+mar = spm_mar(y,p);
+mar = spm_mar_spectra (mar,freqs,ns,1); <span class="comment">% Calculate spectral estimates</span>
+</pre>
+<img vspace="5" hspace="5" src="demo_mar_spectra_complete_01.png" alt=""> <img vspace="5" hspace="5" src="demo_mar_spectra_complete_02.png" alt=""> <img vspace="5" hspace="5" src="demo_mar_spectra_complete_03.png" alt=""> <img vspace="5" hspace="5" src="demo_mar_spectra_complete_04.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+% This simulation is similar to Cassidy and Brown. Spectral Phase
+% J Neurosci Methods. 2003 Aug 1-15;37(3):299.
+
+close all
+
+% This demo simulates complex signals with many sinusoidal components and
+% estimates their spectral properties using MAR models in the setting of
+% multidirectional coupling
+
+% Noise SD
+noise_dev=0.01;
+Nsines=100; % Sinusoidal components 
+f=sqrt(0.2)*randn(Nsines,1)+20; % Frequencies
+secs=50;    % Signal duration
+ns=100; % Sampling frequency
+t=[1/ns:1/ns:secs]';    % Time vector
+N=length(t);    % Sample number
+
+% Initialise signal
+y=zeros(N,1);
+
+% Sum sinusoids with random frequencies
+for n=1:Nsines,
+    y=y+sin(2*pi*f(n)*t);
+end
+y=y/std(y); % Normalise to unit variance
+
+% Delay
+delay=50; % Milliseconds
+delay_in_samples=ns*delay/1000; % Convert delay to number of samples
+
+% Create two signals
+y1=y+noise_dev*randn(N,1);
+y2=[y1(delay_in_samples:end);zeros(delay_in_samples-1,1)]; % y2 is delayed version of y1
+y2=y2+noise_dev*randn(N,1); % Add noise
+
+% Bivariate data matrix
+y=[y1,y2];
+
+% Plot both signals
+h=figure;
+set(h,'name','Data');
+plot(t,y1);
+hold on
+plot(t,y2+3);   % Shift y2 so no overlap
+xlabel('Seconds');
+
+% Fit MAR model
+p=10; % Order
+freqs=[0.5:0.5:32]; % Frequencies
+mar = spm_mar(y,p);
+mar = spm_mar_spectra (mar,freqs,ns,1); % Calculate spectral estimates
+
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
