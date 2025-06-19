@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_nca_pima_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-19">
+<meta name="DC.source" content="demo_nca_pima_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script uses Nonlinear Component Analysis (NCA) with Bayesian</span>
+<span class="comment">% Regularisation to reduce the dimensionality of the 8D input data to 4D latent space</span>
+
+<span class="comment">% Load data</span>
+load <span class="string">pima-dataset</span>
+
+N = size(X,1);  <span class="comment">% Sample size</span>
+<span class="comment">%N = 200;</span>
+ind = randperm(N);  <span class="comment">% Random permutation of data indices</span>
+
+K=8;
+u = X(ind,1:K);  <span class="comment">% Input features</span>
+y = X(ind,9);    <span class="comment">% Target labels</span>
+[N,K] = size(u); <span class="comment">% Update dimensions of input</span>
+
+M.verbose = 1;
+
+<span class="comment">% Desired latent space dimension</span>
+M.p = 4;
+
+<span class="comment">%M.opt = 'FixedStepSize';</span>
+
+<span class="comment">% Bayesian Regularisation</span>
+algorithm=<span class="string">'BR'</span>;
+M.lambda=1; <span class="comment">% Regularisation parameter</span>
+<span class="keyword">switch</span> algorithm
+
+    <span class="keyword">case</span> <span class="string">'BR'</span>,
+        disp(<span class="string">'Bayesian Regularization Algorithm'</span>);
+        M.prune_its_min=1000;   <span class="comment">% Minimum number of pruning iterations</span>
+        M = nca_prune (u, y, M);    <span class="comment">% Run NCA</span>
+
+    <span class="keyword">case</span> <span class="string">'BP'</span>,
+        disp(<span class="string">'Bayesian Pruning Algorithm'</span>);
+        M = nca_prune (u, y, M);    <span class="comment">% Run NCA with pruning</span>
+
+    <span class="keyword">otherwise</span>
+        disp(<span class="string">'Error in demo_nca_synth.m: unknown algorithm'</span>);
+        <span class="keyword">return</span>
+
+<span class="keyword">end</span>
+</pre>
+<pre class="codeoutput">Bayesian Regularization Algorithm
+It 1 Step Size = 0.2670, Log Joint =-578.60
+It 2 Step Size = 0.0830, Log Joint =-457.18
+It 3 Step Size = 0.0043, Log Joint =-448.94
+It 4 Step Size = 0.0032, Log Joint =-443.86
+It 5 Step Size = 0.0032, Log Joint =-439.91
+It 6 Reduce max step size, Log Joint =-439.91
+It 7 Reduce max step size, Log Joint =-439.91
+It 8 Reduce max step size, Log Joint =-439.91
+It 9 Reduce max step size, Log Joint =-439.91
+ 
+Correct Rate = 0.65
+ 
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script uses Nonlinear Component Analysis (NCA) with Bayesian
+% Regularisation to reduce the dimensionality of the 8D input data to 4D latent space
+
+% Load data
+load pima-dataset
+
+N = size(X,1);  % Sample size
+%N = 200;
+ind = randperm(N);  % Random permutation of data indices
+
+K=8;
+u = X(ind,1:K);  % Input features
+y = X(ind,9);    % Target labels
+[N,K] = size(u); % Update dimensions of input
+
+M.verbose = 1;
+
+% Desired latent space dimension
+M.p = 4; 
+
+%M.opt = 'FixedStepSize';
+
+% Bayesian Regularisation
+algorithm='BR';
+M.lambda=1; % Regularisation parameter
+switch algorithm
+        
+    case 'BR',
+        disp('Bayesian Regularization Algorithm');
+        M.prune_its_min=1000;   % Minimum number of pruning iterations
+        M = nca_prune (u, y, M);    % Run NCA
+        
+    case 'BP',
+        disp('Bayesian Pruning Algorithm');
+        M = nca_prune (u, y, M);    % Run NCA with pruning
+        
+    otherwise
+        disp('Error in demo_nca_synth.m: unknown algorithm');
+        return
+        
+end
+##### SOURCE END #####
+-->
+</body>
+</html>

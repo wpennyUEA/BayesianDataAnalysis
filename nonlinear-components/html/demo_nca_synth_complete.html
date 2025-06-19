@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_nca_synth_complete</title>
+<meta name="generator" content="MATLAB 23.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2025-06-19">
+<meta name="DC.source" content="demo_nca_synth_complete.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+
+<span class="comment">% This script demonstrates NCA using Bayesian Pruning. A hinton diagram is</span>
+<span class="comment">% used to compare the true and estimated feature matrix</span>
+
+<span class="comment">% Select one nonlinear mapping</span>
+<span class="comment">%map='eye-x2';</span>
+<span class="comment">%map='diff2';</span>
+map=<span class="string">'diff'</span>;
+<span class="comment">%map='sum';</span>
+
+K = 4; <span class="comment">% Number of input features</span>
+T = 200; <span class="comment">% Number of data points</span>
+
+<span class="comment">% Choose NCA algorithm - Bayesian Pruning</span>
+algorithm=<span class="string">'BP'</span>;
+
+<span class="comment">% Generate data</span>
+[u,y,A] = nca_create_data (map, K, T);
+M.verbose = 1;
+
+<span class="comment">% Apply chosen algorithm</span>
+<span class="keyword">switch</span> algorithm
+    <span class="keyword">case</span> <span class="string">'ML'</span>,
+        disp(<span class="string">'Maximum Likelihood Algorithm'</span>);
+        <span class="comment">%M.p = 1;</span>
+        <span class="comment">%M.opt = 'FixedStepSize';</span>
+        M = nca_org (u', y', M);
+
+    <span class="keyword">case</span> <span class="string">'BR'</span>,
+        disp(<span class="string">'Bayesian Regularization Algorithm'</span>);
+        M.prune_its_min=1000;
+        M = nca_prune (u', y', M);
+
+    <span class="keyword">case</span> <span class="string">'BP'</span>,
+        disp(<span class="string">'Bayesian Pruning Algorithm'</span>);
+        M = nca_prune (u', y', M);
+
+    <span class="keyword">otherwise</span>
+        disp(<span class="string">'Error in demo_nca_synth.m: unknown algorithm'</span>);
+        <span class="keyword">return</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Hinton diagram of true feature matrix</span>
+figure
+subplot(2,1,1);
+hinton(A);
+title(<span class="string">'True Feature Matrix'</span>);
+<span class="comment">% Hinton diagram of estimated feature matrix from model</span>
+subplot(2,1,2);
+hinton(M.A);
+title(<span class="string">'Estimated Feature Matrix'</span>);
+</pre>
+<pre class="codeoutput"> 
+Bayesian Pruning Algorithm
+It 1 Step Size = 0.4344, Log Joint =-79.61
+It 2 Step Size = 0.1296, Log Joint =-69.23
+It 3 Step Size = 0.0564, Log Joint =-68.48
+It 4 Step Size = 0.0364, Log Joint =-67.63
+It 5 Step Size = 0.0237, Log Joint =-67.32
+It 6 Step Size = 0.0193, Log Joint =-67.05
+It 7 Step Size = 0.0149, Log Joint =-66.86
+It 8 Step Size = 0.0138, Log Joint =-66.71
+It 9 Step Size = 0.0103, Log Joint =-66.58
+Removing row, LogBF=5.73
+Removing row, LogBF=5.51
+It 10 Step Size = 0.0438, Log Joint =-66.22
+It 11 Step Size = 0.0263, Log Joint =-66.20
+ 
+Correct Rate = 0.82
+ 
+</pre>
+<img vspace="5" hspace="5" src="demo_nca_synth_complete_01.png" alt=""> <p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+
+clear all
+close all
+
+% This script demonstrates NCA using Bayesian Pruning. A hinton diagram is
+% used to compare the true and estimated feature matrix
+
+% Select one nonlinear mapping
+%map='eye-x2';
+%map='diff2';
+map='diff';
+%map='sum';
+
+K = 4; % Number of input features
+T = 200; % Number of data points
+
+% Choose NCA algorithm - Bayesian Pruning
+algorithm='BP';
+
+% Generate data
+[u,y,A] = nca_create_data (map, K, T);
+M.verbose = 1;
+
+% Apply chosen algorithm
+switch algorithm
+    case 'ML',
+        disp('Maximum Likelihood Algorithm');
+        %M.p = 1;
+        %M.opt = 'FixedStepSize';
+        M = nca_org (u', y', M);
+        
+    case 'BR',
+        disp('Bayesian Regularization Algorithm');
+        M.prune_its_min=1000;
+        M = nca_prune (u', y', M);
+        
+    case 'BP',
+        disp('Bayesian Pruning Algorithm');
+        M = nca_prune (u', y', M);
+        
+    otherwise
+        disp('Error in demo_nca_synth.m: unknown algorithm');
+        return        
+end
+
+% Hinton diagram of true feature matrix
+figure
+subplot(2,1,1);
+hinton(A);
+title('True Feature Matrix');
+% Hinton diagram of estimated feature matrix from model
+subplot(2,1,2);
+hinton(M.A);
+title('Estimated Feature Matrix');
+
+
+##### SOURCE END #####
+-->
+</body>
+</html>
